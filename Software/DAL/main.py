@@ -6,8 +6,12 @@ class Link(object):
     def __init__(self, address):
         self.connection = mavutil.mavlink_connection(address)
         print("Connection opened")
-        self.connection.mav.heartbeat_send(mavutil.mavlink.MAV_TYPE_ONBOARD_CONTROLLER,mavutil.mavlink.MAV_AUTOPILOT_INVALID, 0, 0, 0)
+        self.heart_task = Process(target = self.send_heartbeat)
+        slef.heart_task.start()
         #self.connection.request_data_stream_send(self.connection.target_system, self.connection.target_component, mavutil.mavlink.MAV_DATA_STREAM_ALL, 115200, 1)
+    def send_heartbeat(self):
+        while True:
+            self.connection.mav.heartbeat_send(mavutil.mavlink.MAV_TYPE_ONBOARD_CONTROLLER,mavutil.mavlink.MAV_AUTOPILOT_INVALID, 0, 0, 0)
     def get_wind(self):
         return self.connection.messages['WIND_COV']
     def get_status(self):
@@ -45,7 +49,7 @@ class Link(object):
 
 class main():
     def __init__(self):
-        self.link = Link('127.0.0.1:5760')
+        self.link = Link('tcp:127.0.0.1:5760')
         self.state = ''
         self.task1 = Process(target = self.mainloop)
         self.task1.start()
@@ -65,7 +69,7 @@ class main():
         while self.link.is_landed():
             self.link.get_status()
     def mainloop(self):
-        print(self.link.get_gps())
+        print(self.link.connection.recv_match(type="SYS_STATUS", blocking = True))
 
 if __name__ == "__main__":
     main()
