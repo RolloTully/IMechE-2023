@@ -59,10 +59,10 @@ class MyApp(ShowBase):
     # Define a procedure to move the camera.
     def updateTask(self, task):
         self.terrain.update()
-        self.camera.setPos(0,0,1200)
-        self.camera.setHpr(-1,-1.5,0)
+        self.camera.setPos(0,0,120)
+        self.camera.setHpr(-45,-1.5,0)
         return task.cont
-Tools().gen_terrain()
+#Tools().gen_terrain()
 #print("here")
 app = MyApp()
 app.run()
