@@ -126,12 +126,12 @@ class main():
             pass
     def Load_Parameters(self):
         '''Loads parameters'''
-        self.param_file = open("param.json","r")
-        self.param_data = json.load(self.param_file)
+        self.failure = False 
+        self.param_data = json.load(open("param.json","r"))
 
 
     def Load_mission(self):
-        '''Loads in mission waypoint parameters from a JSON file on an sd card'''
+        '''Loads in mission waypoints from a JSON file on an sd card'''
         self.failure = False
         self.Mission_objects = []
         self.mission_data = json.load(open("Mission.json","r"))
