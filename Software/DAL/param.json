@@ -1,5 +1,4 @@
 {
-  "Landing_Acceptance_Radius": 10,
   "Cargo_Release_Time": 0.25,
   "Cruise_Altitude_Above_Terrain": 50,
   "Cruise_Velocity": 30,
@@ -9,5 +8,15 @@
   "Failsafe_Altitude_High_Threshold": 65,
   "Failsafe_Velocity_Low_Threshold": 20,
   "Failsafe_Velocity_High_Threshold": 65,
-  "Failsafe_Battery_Current_Threshold": 70
+  "Failsafe_Battery_Current_Threshold": 70,
+  "Landing_Cones":{
+    "Landing_Cone_0":{
+      "Low":0
+      "High":120
+    },
+    "Landing_Cone_1":{
+      "Low":0
+      "High":0
+    }
+  }
 }

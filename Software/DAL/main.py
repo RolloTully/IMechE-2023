@@ -2,6 +2,7 @@ import pymavlink
 from pymavlink import mavutil
 import time
 from multiprocessing import Process, active_children
+import numpy as np
 from time import sleep
 import signal
 import sys
@@ -51,7 +52,8 @@ class Link(object):
         pass
 
 class Waypoint(object):
-    def __init__(self, latitude = None, longditude = None, radius= 30, altitude = 60, flag = None, cont= None):
+    def __init__(self, index, latitude = None, longditude = None, radius= 30, altitude = 60, flag = None, cont= None):
+        self.mission_index = index   #Mission Item index, defines the order in which the items will be executed
         self.latitude = latitude     #Latitude
         self.longditude = longditude #Longditude
         self.radius = radius         #Way point acceptance radius
@@ -60,9 +62,10 @@ class Waypoint(object):
     def __call__(self):
         return np.array([self.latitude, self.longditude, self.radius, self.altitude, self.flag])
 
-class DAL(object):
+class HALO(object):
     '''The Dynamic Auto Landing mission item instructs the flight director to perform the relevent actions'''
-    def __init__(self, latitude = None, longditude = None, radius= 30, altitude = 60, flag = None):
+    def __init__(self, index, latitude = None, longditude = None, radius= 30, altitude = 60, flag = None):
+        self.mission_index = index
         self.latitude = latitude     #Landing Latitude
         self.longditude = longditude #Landing Longditude
         self.radius = 10             #Landing target radius
@@ -73,7 +76,8 @@ class DAL(object):
 
 class PCR(object):
     '''This mission item in formed the flight director to monitor the aircraft position and release the cargo at the optimal moment'''
-    def __init__(self, latitude = None, longditude = None, radius= 30, altitude = 60, flag = None):
+    def __init__(self, index, latitude = None, longditude = None, radius= 30, altitude = 60, flag = None):
+        self.mission_index = index
         self.latitude = latitude     #Latitude
         self.longditude = longditude #Longditude
         self.radius = radius         #Way point acceptance radius
@@ -93,15 +97,25 @@ class Mission(object):
 
 class main():
     def __init__(self):
-        self.link = Link("/dev/ttyACM0")
-        signal.signal(signal.SIGINT, self.keyboard_interupt_handler)
-        self.FailSafe_Process = Process(target = self.Failsafe_Watchdog)
-        self.mainloop_process = Process(target = self.mainloop)
-        self.FailSafe_Process.start()
-        self.mainloop_process.start()
+        '''Runs at system boot'''
+        #self.link = Link("/dev/ttyACM0") #Establishes communciation with the flight controller.
+        #signal.signal(signal.SIGINT, self.keyboard_interupt_handler) #Stop people accidently crashing the flight controller while in flight.
+
+        '''Start the Failsafe watchdog'''
+        #self.FailSafe_Process = Process(target = self.Failsafe_Watchdog) #Defines the Failsafe watch dog daughter process.
+        #self.FailSafe_Process.start() #Starts the Failsafe process, this must be started before all other processes to ensure saftey.
+        '''Load Plane Parameters'''
+        self.ret = self.Load_Parameters()
+        if not self.ret:
+        '''Loads mission from json'''
+        self.ret = self.Load_mission()
+        if not self.ret:
+        #self.mainloop_process = Process(target = self.mainloop) #Define the
+        #self.mainloop_process.start()
 
     def Heuristic_Automatic_Landing_Operation(self):# HALO
         '''A fully autinimious heuristic algorithum that optimised the landing heading and flight path angle'''
+        pass
 
     def Precision_Cargo_Release(self):# PCR
         '''Uses onboard velocity time and position estimations to accuratly release the cargo'''
@@ -112,11 +126,32 @@ class main():
             pass
     def Load_Parameters(self):
         '''Loads parameters'''
+        self.param_file = open("param.json","r")
+        self.param_data = json.load(self.param_file)
+
 
     def Load_mission(self):
         '''Loads in mission waypoint parameters from a JSON file on an sd card'''
-        self.mission_file = json.load("mission.json")
+        self.failure = False
+        self.Mission_objects = []
+        self.mission_data = json.load(open("Mission.json","r"))
+        self.mission_items = self.mission_data.keys()
+        for self.mission_item in self.mission_items:
+            if self.mission_data[self.mission_item]["Flag"] == "Waypoint": #Mission item is a waypoint
+                self.Mission_objects.append(Waypoint(self.mission_data[self.mission_item]["Mission_Item_Index"], self.mission_data[self.mission_item]["Latitude"],self.mission_data[self.mission_item]["Longditude"],self.mission_data[self.mission_item]["Acceptance_Radius"], self.mission_data[self.mission_item]["Flag"]))
+            elif self.mission_data[self.mission_item]["Flag"] == "HALO": #Mission Landing command
+                self.Mission_objects.append(HALO(self.mission_data[self.mission_item]["Mission_Item_Index"], self.mission_data[self.mission_item]["Latitude"],self.mission_data[self.mission_item]["Longditude"],self.mission_data[self.mission_item]["Acceptance_Radius"], self.mission_data[self.mission_item]["Flag"]))
+            elif self.mission_data[self.mission_item]["Flag"] == "PCR": #Cargo release supervision
+                self.Mission_objects.append(PCR(self.mission_data[self.mission_item]["Mission_Item_Index"], self.mission_data[self.mission_item]["Latitude"],self.mission_data[self.mission_item]["Longditude"],self.mission_data[self.mission_item]["Acceptance_Radius"], self.mission_data[self.mission_item]["Flag"]))
+            else:
+                print("Dont know how you've ended up here.")
+                self.failure = True
+                break
+        self.Mission_objects.sort(key = lambda x:x.mission_index)
         self.mission = Mission()
+        self.mission.path = array(self.Mission_objects)
+        return self.failure
+
 
     def Failsafe_Watchdog(self):
         '''Monitors system parameters to ensure complicate with all failsafe conditions'''
@@ -157,7 +192,7 @@ class main():
             sys.exit()
     def mainloop(self):
         '''hold while plane is not armed'''
-        while :
+        while True:
             sleep(0.1)
         '''once the plane is armed move on to the designated mission'''
 
