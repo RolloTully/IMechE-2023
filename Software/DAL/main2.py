@@ -20,6 +20,6 @@ while True:
     #print(connection.messages['WIND'])
     #print(connection.messages['ATTITUDE'])
     #print(connection.messages['RANGEFINDER'])
-    print(connection.messages['SYSTEM_TIME'])
+    print(connection.messages[''])
 #msg = connection.recv_match(type='SYS_STATUS', condition='SYS_STATUS.mode==2 and SYS_STATUS.nav_mode==4', blocking=True)
 #print(msg)

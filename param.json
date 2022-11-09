@@ -1,0 +1,13 @@
+{
+  "Landing_Acceptance_Radius": 10,
+  "Cargo_Release_Time": 0.25,
+  "Cruise_Altitude_Above_Terrain": 50,
+  "Cruise_Velocity": 30,
+  "Failsafe_Maximum_Assesment_Period": 1,
+  "Failsafe_Voltage_Low_Threshold": 13,
+  "Failsafe_Voltage_High_Threshold": 30,
+  "Failsafe_Altitude_High_Threshold": 65,
+  "Failsafe_Velocity_Low_Threshold": 20,
+  "Failsafe_Velocity_High_Threshold": 65,
+  "Failsafe_Battery_Current_Threshold": 70
+}

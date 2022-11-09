@@ -6,7 +6,7 @@ from time import sleep
 import signal
 import sys
 import json
-
+'''For saftey at no point should the plane be capable of self re-arming, re-arming must only be possible from the GCS, only self disarming may be possible'''
 class Link(object):
     def __init__(self, address):
         self.connection = mavutil.mavlink_connection(address)
@@ -32,10 +32,7 @@ class Link(object):
         return self.connection.messages['MAV_MODE']
     def is_failsafe(self):
         return self.connection.messages['HL_FAILURE_FLAG']
-    def arm(self):
-        '''Arms drone unless a saftey check is not passed'''
-        self.connection.mav.command_long_send(self.connection.target_system, self.connection.target_component, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,1,0,0,0,0,0,0)
-        return self.connection.recv.match(type='COMMAND_ACK', blocking = True)
+
     def disarm(self):
         '''Force disarms drone'''
         self.connection.mav.command_long_send(self.connection.target_system, self.connection.target_component, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,0,21196,0,0,0,0,0)
@@ -96,10 +93,7 @@ class Mission(object):
 
 class main():
     def __init__(self):
-
         self.link = Link("/dev/ttyACM0")
-
-
         signal.signal(signal.SIGINT, self.keyboard_interupt_handler)
         self.FailSafe_Process = Process(target = self.Failsafe_Watchdog)
         self.mainloop_process = Process(target = self.mainloop)
@@ -111,6 +105,13 @@ class main():
 
     def Precision_Cargo_Release(self):# PCR
         '''Uses onboard velocity time and position estimations to accuratly release the cargo'''
+        self.cargo_release_time = 0.25 #Time taken for the cargo to exit the aircraft
+        self.cargo_relased = False
+        while not self.cargo_relased:
+            #Extrapolate the planes current flight path to predict the time at which the cargo should be released
+            pass
+    def Load_Parameters(self):
+        '''Loads parameters'''
 
     def Load_mission(self):
         '''Loads in mission waypoint parameters from a JSON file on an sd card'''
@@ -154,28 +155,17 @@ class main():
             print("All child processes terminated.")
             print("Terminating flight director.")
             sys.exit()
-
-
-    def terminate(self):
-        self.link.disarm()
-    def failsafe(self, type):
-        if type == 0: #failsafe while grounded
-            self.link.disarm()
-        elif type == 1: #failsafe while in air, FTS
-            self.terminate()
-
-    def check_state(self):
-        while self.link.is_landed():
-            self.link.get_status()
     def mainloop(self):
+        '''hold while plane is not armed'''
+        while :
+            sleep(0.1)
+        '''once the plane is armed move on to the designated mission'''
+
         while True:
             #print(self.link.is_armed())
             print(self.link.connection.messages['WIND'])
             print(self.link.connection.messages['AHRS'])
             print(self.link.connection.messages['GLOBAL_POSITION_INT'])
 
-
-
 if __name__ == "__main__":
-
     main()
