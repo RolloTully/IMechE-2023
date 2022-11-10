@@ -26,3 +26,4 @@ connection.mav.command_long_send(connection.target_system, connection.target_com
 sleep(20)
 
 connection.mav.command_long_send(connection.target_system, connection.target_component, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,0,0,21196,0,0,0,0,0)
+connection.mav.command_long_send(connection.target_system, connection.target_component, 16,0,0,21196,0,0,0,0,0)
