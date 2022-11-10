@@ -97,6 +97,15 @@ class Mission(object):
 
 class main():
     def __init__(self):
+        '''Parameter List'''
+        self.cargo_release_time = 0.25 #Time taken for the cargo to exit the aircraft
+        self.cargo_relased = False
+        self.FS_Maximum_Period = 1 #second
+        self.Velocity_FS_Threshold = [0,30]# Meters per second, keeps the done in line with competiton rules
+        self.Altitude_FS_Threshold = [0,120]#Above altitude, keeps the drone in line with regulations
+        self.Battery_Voltage_FS_Threshold = [0,24]#Volts, prevents brown outs
+        self.Battery_Current_FS_Threshold = [0,100]#Amps, prevents catastrophic short circuit
+
         '''Runs at system boot'''
         #self.link = Link("/dev/ttyACM0") #Establishes communciation with the flight controller.
         #signal.signal(signal.SIGINT, self.keyboard_interupt_handler) #Stop people accidently crashing the flight controller while in flight.
@@ -107,9 +116,11 @@ class main():
         '''Load Plane Parameters'''
         self.ret = self.Load_Parameters()
         if not self.ret:
+            pass
         '''Loads mission from json'''
         self.ret = self.Load_mission()
         if not self.ret:
+            pass
         #self.mainloop_process = Process(target = self.mainloop) #Define the
         #self.mainloop_process.start()
 
@@ -119,15 +130,17 @@ class main():
 
     def Precision_Cargo_Release(self):# PCR
         '''Uses onboard velocity time and position estimations to accuratly release the cargo'''
-        self.cargo_release_time = 0.25 #Time taken for the cargo to exit the aircraft
-        self.cargo_relased = False
         while not self.cargo_relased:
+            print("jjj")
             #Extrapolate the planes current flight path to predict the time at which the cargo should be released
             pass
     def Load_Parameters(self):
         '''Loads parameters'''
-        self.failure = False 
+        self.failure = False
         self.param_data = json.load(open("param.json","r"))
+        self.param_items = self.param_data.keys()
+
+        return self.failure
 
 
     def Load_mission(self):

@@ -2,6 +2,8 @@
   "Cargo_Release_Time": 0.25,
   "Cruise_Altitude_Above_Terrain": 50,
   "Cruise_Velocity": 30,
+  "Target_Glide_Slope":3,
+  "Target_Landing_Speed":15,
   "Failsafe_Maximum_Assesment_Period": 1,
   "Failsafe_Voltage_Low_Threshold": 13,
   "Failsafe_Voltage_High_Threshold": 30,
@@ -11,12 +13,12 @@
   "Failsafe_Battery_Current_Threshold": 70,
   "Landing_Cones":{
     "Landing_Cone_0":{
-      "Low":0
-      "High":120
+      "Low": 0,
+      "High": 120
     },
     "Landing_Cone_1":{
-      "Low":0
-      "High":0
+      "Low": 0,
+      "High": 0
     }
   }
 }

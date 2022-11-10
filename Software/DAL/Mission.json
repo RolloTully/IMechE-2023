@@ -5,42 +5,47 @@
     "Longditude":0,
     "Acceptance_Radius":10,
     "Flag":"Waypoint",
-    "Continuation",
+    "Continuation": 0
   },
   "Mission_Item_1": {
     "Mission_Item_Index":1,
     "Latitude":0,
     "Longditude":0,
     "Acceptance_Radius":10,
-    "Flag":"Waypoint"
+    "Flag":"Waypoint",
+    "Continuation": 0
   },
   "Mission_Item_2": {
     "Mission_Item_Index":2,
     "Latitude":0,
     "Longditude":0,
     "Acceptance_Radius":10,
-    "Flag":"Waypoint"
+    "Flag":"Waypoint",
+    "Continuation": 0
   },
   "Mission_Item_3": {
     "Mission_Item_Index":3,
     "Latitude":0,
     "Longditude":0,
     "Acceptance_Radius":10,
-    "Flag":"Waypoint"
+    "Flag":"Waypoint",
+    "Continuation": 0
   },
   "Mission_Item_4": {
     "Mission_Item_Index":4,
     "Latitude":0,
     "Longditude":0,
     "Acceptance_Radius":10,
-    "Flag":"Waypoint"
+    "Flag":"Waypoint",
+    "Continuation": 0
   },
   "Mission_Item_5": {
     "Mission_Item_Index":5,
     "Latitude":0,
     "Longditude":0,
     "Acceptance_Radius":10,
-    "Flag":"PCR"
+    "Flag":"PCR",
+    "Continuation": 0
   },
   "Mission_Item_6": {
     "Mission_Item_Index":6,
@@ -48,7 +53,7 @@
     "Longditude":0,
     "Acceptance_Radius":10,
     "Flag":"HALO",
-    "Continuation","Disarm"
+    "Continuation":1
 
   }
 }
