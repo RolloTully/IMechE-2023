@@ -24,16 +24,16 @@ class Link(object):
         print("Link Ready.")
     def Set_Messages(self):
         ''' Sets up the nessecary message intervals'''
-        self.message_list = [33,83]# Filtered predicted positon, Commanded Attitude 
+        self.message_list = [33, 83]# Filtered predicted positon, Commanded Attitude
         for cmd in self.message_list:
-            self.connection.mav.command_long_send(self.connection.target_system,self.connection.target_component, mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,0,cmd,2000,1,0,0,0,0) # Sets up a request for the predicted system position every 2000 micro seconds
-            self.connection.recv_match(type='COMMAND_ACK', blocking = True)
+            self.connection.mav.command_long_send(self.connection.target_system,self.connection.target_component, mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,0,cmd,2000,1,0,0,0,0) # Requests the required messages
+            self.connection.recv_match(type='COMMAND_ACK', blocking = True) # Waits for confirmation.
 
     def send_heartbeat(self):
         while True:
             self.connection.mav.heartbeat_send(mavutil.mavlink.MAV_TYPE_ONBOARD_CONTROLLER,mavutil.mavlink.MAV_AUTOPILOT_GENERIC, 0, 0, 0)
             self.connection.wait_heartbeat()
-            sleep(1)
+            sleep(0.2)
     def set_pwm(self, channel, position):
         self.rc_channel_values = [65535 for _ in range(18)]
         self.rc_channel_values[channel- 1] = position
