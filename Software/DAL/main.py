@@ -1,5 +1,5 @@
 import pymavlink
-from pymavlink import mavutil
+from pymavlink import mavutil, mavwp
 import time
 from multiprocessing import Process, active_children
 import numpy as np
@@ -7,33 +7,37 @@ from time import sleep
 import signal
 import sys
 import json
+
+global FailSafe_Ready
+FailSafe_Ready = False
 '''For saftey at no point should the plane be capable of self re-arming, re-arming must only be possible from the GCS, only self disarming may be possible'''
 class Link(object):
     def __init__(self, address):
+        self.Waypoint_Loader = mavwp.MAVWPLoader()
         self.connection = mavutil.mavlink_connection(address)
-        print("Connection Established")
+        print("Connection Established.")
         self.connection.wait_heartbeat()
+        print("Heartbeat recived.")
         self.connection.mav.ping_send(int(time.time() * 1e6),0,0,0)
         self.heart_task = Process(target = self.send_heartbeat)
         self.heart_task.start()
+        print("Link Ready.")
+    def Set_Messages(self):
+        ''' Sets up the nessecary message intervals'''
+        self.message_list = [33,83]# Filtered predicted positon, Commanded Attitude 
+        for cmd in self.message_list:
+            self.connection.mav.command_long_send(self.connection.target_system,self.connection.target_component, mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,0,cmd,2000,1,0,0,0,0) # Sets up a request for the predicted system position every 2000 micro seconds
+            self.connection.recv_match(type='COMMAND_ACK', blocking = True)
+
     def send_heartbeat(self):
         while True:
             self.connection.mav.heartbeat_send(mavutil.mavlink.MAV_TYPE_ONBOARD_CONTROLLER,mavutil.mavlink.MAV_AUTOPILOT_GENERIC, 0, 0, 0)
             self.connection.wait_heartbeat()
             sleep(1)
-    def Update_Variables(self):
-        self.message_package = self.connection.messages
-    def get_wind(self):
-        return self.connection.messages['WIND']
-    def get_status(self):
-        return self.connection.messages['SYS_STATUS']
-    def get_gps(self):
-        return self.connection.messages['GPS_RAW_INT']
-    def is_armed(self):
-        return self.connection.messages['MAV_MODE']
-    def is_failsafe(self):
-        return self.connection.messages['HL_FAILURE_FLAG']
-
+    def set_pwm(self, channel, position):
+        self.rc_channel_values = [65535 for _ in range(18)]
+        self.rc_channel_values[channel- 1] = position
+        self.commection.mav.rc_channels_override_send(self.connection.target_system,self.connection.target_component,*self.rc_channel_values)
     def disarm(self):
         '''Force disarms drone'''
         self.connection.mav.command_long_send(self.connection.target_system, self.connection.target_component, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,0,21196,0,0,0,0,0)
@@ -50,6 +54,18 @@ class Link(object):
         pass
     def set_geofence(self):
         pass
+    #def send_Command(self,command,data):
+    #    self.connection.mav.command_long_send(self.connection.target_system)
+
+    #def Recv_Response(self):
+
+
+
+    def Upload_Waypoint(self,mission_array):
+        self.connection.mav.command_long_send(self.connection.target_system, self.connection.target_component, mavutil.mavlink.MISSION_COUNT,0,1,21196,0,0,0,0,0) # Command 44(Mission Count)
+        self.resp = self.connection.recv_match(type='MISSION_REQUEST_INT', blocking = True)
+        print(self.resp.to_dict())
+
 
 class Waypoint(object):
     def __init__(self, index, latitude = None, longditude = None, radius= 30, altitude = 60, flag = None, cont= None):
@@ -105,24 +121,27 @@ class main():
         self.Altitude_FS_Threshold = [0,120]#Above altitude, keeps the drone in line with regulations
         self.Battery_Voltage_FS_Threshold = [0,24]#Volts, prevents brown outs
         self.Battery_Current_FS_Threshold = [0,100]#Amps, prevents catastrophic short circuit
-
         '''Runs at system boot'''
-        #self.link = Link("/dev/ttyACM0") #Establishes communciation with the flight controller.
-        #signal.signal(signal.SIGINT, self.keyboard_interupt_handler) #Stop people accidently crashing the flight controller while in flight.
-
+        self.link = Link("/dev/ttyACM0") #Establishes communciation with the flight controller.
+        signal.signal(signal.SIGINT, self.keyboard_interupt_handler) #Stop people accidently crashing the flight controller while in flight.
         '''Start the Failsafe watchdog'''
-        #self.FailSafe_Process = Process(target = self.Failsafe_Watchdog) #Defines the Failsafe watch dog daughter process.
-        #self.FailSafe_Process.start() #Starts the Failsafe process, this must be started before all other processes to ensure saftey.
+        self.FailSafe_Process = Process(target = self.Failsafe_Watchdog) #Defines the Failsafe watch dog daughter process.
+        self.FailSafe_Process.start() #Starts the Failsafe process, this must be started before all other processes to ensure saftey.
+        print("Watchdog Active.")
         '''Load Plane Parameters'''
         self.ret = self.Load_Parameters()
         if not self.ret:
             pass
+        print("Params Loaded.")
         '''Loads mission from json'''
         self.ret = self.Load_mission()
         if not self.ret:
             pass
-        #self.mainloop_process = Process(target = self.mainloop) #Define the
-        #self.mainloop_process.start()
+        print("Mission Loaded Successfully.")
+        self.mainloop_process = Process(target = self.mainloop) #Define the
+        self.mainloop_process.start()
+
+    def Get_Home(self):
 
     def Heuristic_Automatic_Landing_Operation(self):# HALO
         '''A fully autinimious heuristic algorithum that optimised the landing heading and flight path angle'''
@@ -130,12 +149,20 @@ class main():
 
     def Precision_Cargo_Release(self):# PCR
         '''Uses onboard velocity time and position estimations to accuratly release the cargo'''
+        self.cargo_relased = False
+        self.cargo_release_time_threshold = 0.1 #seconds
         while not self.cargo_relased:
-            print("jjj")
+            self.link.connection.messages
+            self.position = np.array([])
+            self.v_x = self.v*np.cos(self.heading+self.d_heading)
+            self.v_Y = self.v*np.sin(self.heading+self.d_heading)
+            self.rho = self.d_heading*self.v
+            self.centre_or_rot = self.position + np.array([self.rho*np.cos(self.heading),self.rho*np.sin(self.heading)])
+            self.prop_forward = []
             #Extrapolate the planes current flight path to predict the time at which the cargo should be released
             pass
     def Load_Parameters(self):
-        '''Loads parameters'''
+        '''Loads Program Parameters'''
         self.failure = False
         self.param_data = json.load(open("param.json","r"))
         self.param_items = self.param_data.keys()
@@ -162,9 +189,27 @@ class main():
                 break
         self.Mission_objects.sort(key = lambda x:x.mission_index)
         self.mission = Mission()
-        self.mission.path = array(self.Mission_objects)
+        self.mission.path = np.array(self.Mission_objects)
         return self.failure
 
+    def Failsafe_Action(self):
+        '''
+        The actions of the FTS must aim to safely land the UA as soon as possible after initiation.
+        For Fixed Wing aircraft, the throttle shall be set to ‘engine off’ and the control surfaces
+        set to initiate a rapid spiral descent.
+        For hybrid aircraft, the aircraft shall not transition between hover and forward flight
+        following any activation of FTS or Failsafes.
+        Other actions could include deployment of a recovery parachute.
+        Full aileron left
+        Full up elevator
+        Full rudder left
+        Initiates a death spiral
+        '''
+        # If in no failsafe region override.
+        self.link.set_pwm(2,1900)# Elevator
+        self.link.set_pwm(3,1900)# Aileron
+        self.link.set_pwm(4,1900)# Rudder
+        self.link.set_pwm(1,500) #Throttle
 
     def Failsafe_Watchdog(self):
         '''Monitors system parameters to ensure complicate with all failsafe conditions'''
@@ -182,14 +227,14 @@ class main():
         self.Velocity_FS_Threshold = [0,30]# Meters per second, keeps the done in line with competiton rules
         self.Altitude_FS_Threshold = [0,120]#Above altitude, keeps the drone in line with regulations
         self.Battery_Voltage_FS_Threshold = [0,24]#Volts, prevents brown outs
-        self.Battery_Current_FS_Threshold = [0,100]#Amps, prevents catastrophic short circuit
+        self.Battery_Current_FS_Threshold = [0,100]#Amps, catastrophic short circuit
+        print("Watchdog Boot.")
         while True:
-            sleep(10)
+            sleep(1)
+            print("Set state")
+            FailSafe_Ready = True
             pass
-
-
-
-    def keyboard_interupt_handler(self):
+    def keyboard_interupt_handler(self,q,p):
         '''Execute order 66, kills all the children'''
         '''Interupts the standard keyboard interupt to ensure all processes are correctly terminated.'''
         if not self.link.is_landed():
@@ -205,15 +250,39 @@ class main():
             sys.exit()
     def mainloop(self):
         '''hold while plane is not armed'''
-        while True:
-            sleep(0.1)
-        '''once the plane is armed move on to the designated mission'''
+        while not FailSafe_Ready:
+            sleep(1)
+            print(FailSafe_Ready)
+            pass
+        print(self.link.connection.motors_armed_wait())
+        print("Armed")
+        '''Upload Mission'''
+
+
+
+        '''Monitor waypoint mission progress.'''
 
         while True:
-            #print(self.link.is_armed())
-            print(self.link.connection.messages['WIND'])
-            print(self.link.connection.messages['AHRS'])
-            print(self.link.connection.messages['GLOBAL_POSITION_INT'])
+            '''What is the current'''
+            sleep(0.1)
+
+        ''' Move to cargo drop, Start PCR'''
+        self.PCR()
+
+
+
+        '''Monitor waypoint mission progress.'''
+        while True:
+            '''what is the current waypoint.'''
+            sleep(0.1)
+        '''Start HALO.'''
+
+
+        sleep(5)
+        self.link.disarm()
+        #while True:
+        #    pass
+
 
 if __name__ == "__main__":
     main()
