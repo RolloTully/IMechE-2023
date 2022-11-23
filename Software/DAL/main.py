@@ -68,11 +68,12 @@ class Link(object):
 
 
 class Waypoint(object):
-    def __init__(self, index, latitude = None, longditude = None, radius= 30, altitude = 60, flag = None, cont= None):
+    def __init__(self, index, latitude = None, longditude = None, radius= 30, p_rad = 0, altitude = 60, flag = None, cont= None):
         self.mission_index = index   #Mission Item index, defines the order in which the items will be executed
         self.latitude = latitude     #Latitude
         self.longditude = longditude #Longditude
         self.radius = radius         #Way point acceptance radius
+        self.pass_radius = r_rad        #Direction to pass the way point
         self.altitude = altitude     #Target waypoint altitude
         self.flag = flag             #Waypoint flag
     def __call__(self):
@@ -85,6 +86,7 @@ class HALO(object):
         self.latitude = latitude     #Landing Latitude
         self.longditude = longditude #Landing Longditude
         self.radius = 10             #Landing target radius
+        self.pass_radius = 0         #Direction to pass the way point, must hit waypoint
         self.altitude = altitude     #Landing waypoint altitude
         self.flag = "DAL"            #DAL flag
     def __call__(self):
@@ -97,6 +99,7 @@ class PCR(object):
         self.latitude = latitude     #Latitude
         self.longditude = longditude #Longditude
         self.radius = radius         #Way point acceptance radius
+        self.pass_radius = 0        #Direction to pass the way point
         self.altitude = altitude     #Target waypoint altitude
         self.flag = "PCR"             #Waypoint flag, Precision Cargo Release flag
     def __call__(self):
