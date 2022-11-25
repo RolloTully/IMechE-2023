@@ -28,16 +28,33 @@ class Link(object):
         for cmd in self.message_list:
             self.connection.mav.command_long_send(self.connection.target_system,self.connection.target_component, mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,0,cmd,2000,1,0,0,0,0) # Requests the required messages
             self.connection.recv_match(type='COMMAND_ACK', blocking = True) # Waits for confirmation.
+
+    def Do_Takeoff(self, mission_item):
+        self.latitude, self.longditude, self.altitude, self.minimum_Pitch self.flag = mission_item()
+        self.point = mavutil.mavlink.MAVLink_mission_item_message(mav.target_system, mav.target_component, seq, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 1, self.minimum_Pitch, 0, 0, 0, self.latitude, self.longditude, self.altitude)
+        self.Waypoint_Loader.add(self.point)
+
+    def Do_Waypoints(self, mission_item):
+        ''' Uploads a sequence of way points'''
+        self.latitude, self.longditude, self.radius, self.pass_radius, self.altitude, self.flag = mission_item()
+        for self.mission_item_index in range(0,len(self.latitude)):
+            self.point = mavutil.mavlink.MAVLink_mission_item_message(mav.target_system, mav.target_component, self.mission_item_index, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 1, 0, self.radius, self.pass_radius, 0, self.latitude, self.longditude, self.altitude)
+            self.Waypoint_Loader.add(self.point)
+
+    def Do_Landing(self, mission_item):
+        '''Needs 2 waypoints to define the landing slope'''
+        self.latitude, self.longditude, self.altitude, self.flag = mission_item()
+
     def Upload_Waypoint(self, Waypoints):
         mav.waypoint_clear_all_send()
         for self.waypoint in Waypoints:
-            self.self.latitude, self.longditude, self.radius, self.pass_radius, self.altitude, self.flag = self.waypoint()
+            self.latitude, self.longditude, self.radius, self.pass_radius, self.altitude, self.flag = self.waypoint()
             if self.flag = "WP"
-                self.point = mavutil.mavlink.MAVLink_mission_item_message(mav.target_system, mav.target_component, seq, frame, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 1, 0, self.radius, self.pass_radius, 0, self.latitude, self.longditude, self.altitude)
+                self.point = mavutil.mavlink.MAVLink_mission_item_message(mav.target_system, mav.target_component, seq, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 1, 0, self.radius, self.pass_radius, 0, self.latitude, self.longditude, self.altitude)
             elif self.flag = "HALO":
-                self.point = mavutil.mavlink.MAVLink_mission_item_message(mav.target_system, mav.target_component, seq, frame, mavutil.mavlink.MAV_CMD_NAV_LAND, current, 1, 0, 0, 0, self.yaw, self.latitude, self.longditude, self.altitude)
+                self.point = mavutil.mavlink.MAVLink_mission_item_message(mav.target_system, mav.target_component, seq, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_LAND, 0, 1, 0, 0, 0, self.yaw, self.latitude, self.longditude, self.altitude)
             elif self.flag = "PCR"
-                self.point = mavutil.mavlink.MAVLink_mission_item_message(mav.target_system, mav.target_component, seq, frame, mavutil.mavlink.MAV_CMD_NAV_LAND, current, 1, 0, 0, 0, self.yaw, self.latitude, self.longditude, self.altitude)
+                self.point = mavutil.mavlink.MAVLink_mission_item_message(mav.target_system, mav.target_component, seq, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_LAND, current, 1, 0, 0, 0, self.yaw, self.latitude, self.longditude, self.altitude)
 
     def send_heartbeat(self):
         while True:
@@ -86,7 +103,7 @@ class Takeoff(object):
         self.altitude = altitude     #Landing waypoint altitude
         self.minimum_Pitch = minimum_pitch
     def __call__(self):
-        return np.array([self.latitude, self.longditude, self.altitude, self.flag])
+        return np.array([self.latitude, self.longditude, self.altitude,self.minimum_Pitch, self.flag])
 class HALO(object):
     '''The Dynamic Auto Landing mission item instructs the flight director to perform the relevent actions'''
     def __init__(self, index, latitude = None, longditude = None, radius= 30, altitude = 60):
@@ -94,7 +111,7 @@ class HALO(object):
         self.longditude = longditude #Landing Longditude
         self.altitude = altitude     #Landing waypoint altitude
     def __call__(self):
-        return np.array([self.latitude, self.longditude, self.radius, self.altitude, self.flag])
+        return np.array([self.latitude, self.longditude, self.altitude, self.flag])
 class PCR(object):
     '''This mission item in formed the flight director to monitor the aircraft position and release the cargo at the optimal moment'''
     def __init__(self, latitude = None, longditude = None, altitude = 30):
@@ -167,7 +184,6 @@ class main():
         self.failure = False
         self.param_data = json.load(open("param.json","r"))
         self.param_items = self.param_data.keys()
-
         return self.failure
 
 
@@ -178,13 +194,13 @@ class main():
         self.mission_sections = self.mission_data.keys()
         for self.mission_section in self.mission_sections:
             self.section_type = self.mission_data[self.mission_section]["Type"]
-            if self.section_type = "TKOF":
+            if self.section_type == "TKOF":
                 self.Minimum_Pitch = [self.mission_data[self.mission_section]["TKOF_Options"]["Minimum_Pitch"]]
                 self.Latitude = [self.mission_data[self.mission_section]["TKOF_Options"]["Latitude"]]
                 self.Longditude = [self.mission_data[self.mission_section]["TKOF_Options"]["Longditude"]]
                 self.Altitude = [self.mission_data[self.mission_section]["TKOF_Options"]["Altitude"]]
                 self.Mission_objects.append(Takeoff(0,self.Latitude, self.Longditude, self.Altitude, self.Minimum_Pitch))
-            elif self.section_type = "WP":
+            elif self.section_type == "WP":
                 self.Latitude = []
                 self.Longditude = []
                 self.Altitude = []
@@ -198,11 +214,11 @@ class main():
                     self.Acceptance_Radius.append(self.mission_data[self.mission_section]["Waypoints"][self.Mission_item]["Acceptance_Radius"])
                     self.Pass_Distance.append(self.mission_data[self.mission_section]["Waypoints"][self.Mission_item]["Pass_Distance"])
                 self.Mission_objects.append(Path(self.Latitude, self.Longditude, self.Acceptance_Radius, self.Pass_Distance, self.Altitude))
-            elif self.section_type = "PCR":
+            elif self.section_type == "PCR":
                 self.Latitude = [self.mission_data[self.mission_section]["PCR_Data"]["Latitude"]]
                 self.Longditude = [self.mission_data[self.mission_section]["PCR_Data"]["Longditude"]]
                 self.Mission_objects.append(PCR(self.Latitude, self.Latitude))
-            elif self.section_type = "HALO":
+            elif self.section_type == "HALO":
                 self.Latitude = [self.mission_data[self.mission_section]["HALO_Data"]["Latitude"]]
                 self.Longditude = [self.mission_data[self.mission_section]["HALO_Data"]["Longditude"]]
                 self.Altitude = [self.mission_data[self.mission_section]["HALO_Data"]["Altitude_Abort"]]
