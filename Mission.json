@@ -19,7 +19,7 @@
         "Longditude":0,
         "Altitude":50,
         "Acceptance_Radius":10,
-        "Pass_Distance":10,
+        "Pass_Distance":10
       },
       "Mission_Item_1": {
         "Mission_Item_Index":1,
@@ -27,7 +27,7 @@
         "Longditude":0,
         "Altitude":50,
         "Acceptance_Radius":10,
-        "Pass_Distance":10,
+        "Pass_Distance":10
       },
       "Mission_Item_2": {
         "Mission_Item_Index":2,
@@ -35,7 +35,7 @@
         "Longditude":0,
         "Altitude":50,
         "Acceptance_Radius":10,
-        "Pass_Distance":10,
+        "Pass_Distance":10
       }
     }
   },
@@ -49,7 +49,7 @@
         "Longditude":0,
         "Altitude":50,
         "Acceptance_Radius":10,
-        "Pass_Distance":0,
+        "Pass_Distance":0
       },
       "Mission_Item_1": {
         "Mission_Item_Index":1,
@@ -57,7 +57,7 @@
         "Longditude":0,
         "Altitude":50,
         "Acceptance_Radius":10,
-        "Pass_Distance":0,
+        "Pass_Distance":0
       },
       "Mission_Item_1": {
         "Mission_Item_Index":1,
@@ -65,7 +65,7 @@
         "Longditude":0,
         "Altitude":50,
         "Acceptance_Radius":10,
-        "Pass_Distance":0,
+        "Pass_Distance":0
       }
     }
   },
@@ -78,7 +78,7 @@
         "Longditude":0,
         "Altitude":50,
         "Acceptance_Radius":10,
-        "Pass_Distance":10,
+        "Pass_Distance":10
       },
       "Mission_Item_1": {
         "Mission_Item_Index":1,
@@ -86,7 +86,7 @@
         "Longditude":0,
         "Altitude":50,
         "Acceptance_Radius":10,
-        "Pass_Distance":10,
+        "Pass_Distance":10
       },
       "Mission_Item_2": {
         "Mission_Item_Index":2,
@@ -94,7 +94,7 @@
         "Longditude":0,
         "Altitude":50,
         "Acceptance_Radius":10,
-        "Pass_Distance":10,
+        "Pass_Distance":10
       }
     }
   },
@@ -109,5 +109,4 @@
       }
     }
   }
-}
 }
