@@ -10,7 +10,7 @@ import json
 
 global FailSafe_Ready
 FailSafe_Ready = False
-'''For saftey at no point should the plane be capable of self re-arming, re-arming must only be possible from the GCS, only self disarming may be possible'''
+
 class Link(object):
     def __init__(self, address):
         self.Waypoint_Loader = mavwp.MAVWPLoader()
@@ -28,6 +28,16 @@ class Link(object):
         for cmd in self.message_list:
             self.connection.mav.command_long_send(self.connection.target_system,self.connection.target_component, mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,0,cmd,2000,1,0,0,0,0) # Requests the required messages
             self.connection.recv_match(type='COMMAND_ACK', blocking = True) # Waits for confirmation.
+    def Upload_Waypoint(self, Waypoints):
+        mav.waypoint_clear_all_send()
+        for self.waypoint in Waypoints:
+            self.self.latitude, self.longditude, self.radius, self.pass_radius, self.altitude, self.flag = self.waypoint()
+            if self.flag = "WP"
+                self.point = mavutil.mavlink.MAVLink_mission_item_message(mav.target_system, mav.target_component, seq, frame, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 1, 0, self.radius, self.pass_radius, 0, self.latitude, self.longditude, self.altitude)
+            elif self.flag = "HALO":
+                self.point = mavutil.mavlink.MAVLink_mission_item_message(mav.target_system, mav.target_component, seq, frame, mavutil.mavlink.MAV_CMD_NAV_LAND, current, 1, 0, 0, 0, self.yaw, self.latitude, self.longditude, self.altitude)
+            elif self.flag = "PCR"
+                self.point = mavutil.mavlink.MAVLink_mission_item_message(mav.target_system, mav.target_component, seq, frame, mavutil.mavlink.MAV_CMD_NAV_LAND, current, 1, 0, 0, 0, self.yaw, self.latitude, self.longditude, self.altitude)
 
     def send_heartbeat(self):
         while True:
@@ -54,17 +64,7 @@ class Link(object):
         pass
     def set_geofence(self):
         pass
-    #def send_Command(self,command,data):
-    #    self.connection.mav.command_long_send(self.connection.target_system)
 
-    #def Recv_Response(self):
-
-
-
-    def Upload_Waypoint(self,mission_array):
-        self.connection.mav.command_long_send(self.connection.target_system, self.connection.target_component, mavutil.mavlink.MISSION_COUNT,0,1,21196,0,0,0,0,0) # Command 44(Mission Count)
-        self.resp = self.connection.recv_match(type='MISSION_REQUEST_INT', blocking = True)
-        print(self.resp.to_dict())
 
 
 class Waypoint(object):
@@ -77,7 +77,7 @@ class Waypoint(object):
         self.altitude = altitude     #Target waypoint altitude
         self.flag = flag             #Waypoint flag
     def __call__(self):
-        return np.array([self.latitude, self.longditude, self.radius, self.altitude, self.flag])
+        return self.latitude, self.longditude, self.radius, self.pass_radius, self.altitude, self.flag
 
 class HALO(object):
     '''The Dynamic Auto Landing mission item instructs the flight director to perform the relevent actions'''
@@ -146,6 +146,9 @@ class main():
 
     def Get_Home(self):
 
+    def Do_Waypoints(self, path):
+
+
     def Heuristic_Automatic_Landing_Operation(self):# HALO
         '''A fully autinimious heuristic algorithum that optimised the landing heading and flight path angle'''
         pass
@@ -154,6 +157,17 @@ class main():
         '''Uses onboard velocity time and position estimations to accuratly release the cargo'''
         self.cargo_relased = False
         self.cargo_release_time_threshold = 0.1 #seconds
+        '''Upload Path'''
+        '''Uploads 2 waypoints'''
+
+        '''Monitor progress'''
+        '''Checks to see when way point 1 has been passed'''
+        '''Starts monitoring position and release time'''
+
+        '''Release cargo, does t<=0'''
+        self.link.set_pwm()#actuated the release servo
+
+
         while not self.cargo_relased:
             self.link.connection.messages
             self.position = np.array([])

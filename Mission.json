@@ -1,0 +1,113 @@
+{
+  "Section_0":
+  {
+    "Type":"TKOF",
+    "TKOF_Options":
+    {
+      "Minimum_Pitch":15,
+      "Latitude":0,
+      "Longditude":0,
+      "Altitude":50
+    }
+  },
+  "Section_1":{
+    "Type":"WP",
+    "Waypoints":{
+      "Mission_Item_0": {
+        "Mission_Item_Index":0,
+        "Latitude":0,
+        "Longditude":0,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10,
+      },
+      "Mission_Item_1": {
+        "Mission_Item_Index":1,
+        "Latitude":0,
+        "Longditude":0,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10,
+      },
+      "Mission_Item_2": {
+        "Mission_Item_Index":2,
+        "Latitude":0,
+        "Longditude":0,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10,
+      }
+    }
+  },
+  "Section_2":{
+    "Type":"PCR",
+    "Waypoints":{
+
+      "Mission_Item_0": {
+        "Mission_Item_Index":0,
+        "Latitude":0,
+        "Longditude":0,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":0,
+      },
+      "Mission_Item_1": {
+        "Mission_Item_Index":1,
+        "Latitude":0,
+        "Longditude":0,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":0,
+      },
+      "Mission_Item_1": {
+        "Mission_Item_Index":1,
+        "Latitude":0,
+        "Longditude":0,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":0,
+      }
+    }
+  },
+  "Section_3":{
+    "Type":"WP",
+    "Waypoints":{
+      "Mission_Item_0": {
+        "Mission_Item_Index":0,
+        "Latitude":0,
+        "Longditude":0,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10,
+      },
+      "Mission_Item_1": {
+        "Mission_Item_Index":1,
+        "Latitude":0,
+        "Longditude":0,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10,
+      },
+      "Mission_Item_2": {
+        "Mission_Item_Index":2,
+        "Latitude":0,
+        "Longditude":0,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10,
+      }
+    }
+  },
+  "Section_4":{
+    "Type":"HALO",
+    "Waypoints":{
+      "Mission_Item_0": {
+        "Mission_Item_Index":0,
+        "Altitude_Abort":50,
+        "Latitude":0,
+        "Longditude":0
+      }
+    }
+  }
+}
+}

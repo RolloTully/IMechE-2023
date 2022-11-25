@@ -4,6 +4,7 @@
     "Latitude":0,
     "Longditude":0,
     "Acceptance_Radius":10,
+    "Pass_Distance":10,
     "Flag":"Waypoint",
     "Continuation": 0
   },
@@ -12,6 +13,8 @@
     "Latitude":0,
     "Longditude":0,
     "Acceptance_Radius":10,
+    "Pass_Distance":10,
+
     "Flag":"Waypoint",
     "Continuation": 0
   },
@@ -20,6 +23,7 @@
     "Latitude":0,
     "Longditude":0,
     "Acceptance_Radius":10,
+    "Pass_Distance":10,
     "Flag":"Waypoint",
     "Continuation": 0
   },
@@ -28,6 +32,7 @@
     "Latitude":0,
     "Longditude":0,
     "Acceptance_Radius":10,
+    "Pass_Distance":10,
     "Flag":"Waypoint",
     "Continuation": 0
   },
@@ -36,6 +41,7 @@
     "Latitude":0,
     "Longditude":0,
     "Acceptance_Radius":10,
+    "Pass_Distance":10,
     "Flag":"Waypoint",
     "Continuation": 0
   },
@@ -44,6 +50,7 @@
     "Latitude":0,
     "Longditude":0,
     "Acceptance_Radius":10,
+    "Pass_Distance":10,
     "Flag":"PCR",
     "Continuation": 0
   },
@@ -52,6 +59,7 @@
     "Latitude":0,
     "Longditude":0,
     "Acceptance_Radius":10,
+    "Pass_Distance":10,
     "Flag":"HALO",
     "Continuation":1
 

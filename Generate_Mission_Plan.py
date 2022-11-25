@@ -43,26 +43,36 @@ class GUI(Tk):
         Tk.__init__(self, parent)
         self.title("Mission Designer")
         self.geometry("1000x900+20+20")
+        self.Home_location = [52.780610, -0.707754] # Takeoff and Landing Location
+        self.Cargo_Drop_Loaction = [52.781062, -0.708120]
+        self.mission_point_array = [[52.779968, -0.711000, 50],
+                                    [52.780636, -0.713339, 50],
+                                    [52.782790, -0.710382, 50],
+                                    [52.784449, -0.709557, 50],
+                                    [52.785023, -0.712609, 50],
+                                    [52.782741, -0.715022, 50],
+                                    [52.782591, -0.707825, 50],
+                                    [52.781331, -0.705804, 50]]
         self.tools = Tools()
 
 
         '''Latitude input box'''
         Label(self,text="Latitude").place(x=10,y=10)
-        self.wing_Diheadral_input= Entry(self, width = 7)
-        self.wing_Diheadral_input.insert(END,"0")
-        self.wing_Diheadral_input.place(x=10,y=30)
+        self.Latitude_input = Entry(self, width = 7)
+        self.Latitude_input.insert(END,"0")
+        self.Latitude_input.place(x=10,y=30)
 
         '''Longditude input box'''
         Label(self,text="Longditude").place(x=100,y=10)
-        self.wing_Diheadral_input= Entry(self, width = 7)
-        self.wing_Diheadral_input.insert(END,"0")
-        self.wing_Diheadral_input.place(x=100,y=30)
+        self.Longditude_input = Entry(self, width = 7)
+        self.Longditude_input.insert(END,"0")
+        self.Longditude_input.place(x=100,y=30)
 
         '''Altitude input box'''
         Label(self,text="Altitude").place(x=200,y=10)
-        self.wing_Diheadral_input= Entry(self, width = 7)
-        self.wing_Diheadral_input.insert(END,"50")
-        self.wing_Diheadral_input.place(x=200,y=30)
+        self.Altitude_input = Entry(self, width = 7)
+        self.Altitude_input.insert(END,"50")
+        self.Altitude_input.place(x=200,y=30)
 
         '''Map figure'''
         self.map_figure = Figure(figsize=(2,3),dpi=100)
@@ -76,6 +86,10 @@ class GUI(Tk):
         self.add_waypoint_button = Button(self,text="Add",height = 2, width = 5, command = self.add_waypoint)
         self.add_waypoint_button.place(x=300,y=10)
 
+        '''Clear waypoint button'''
+        self.clear_waypoint_button = Button(self,text="Clear",height = 2, width = 5, command = self.clear_waypoints)
+        self.clear_waypoint_button.place(x=370,y=10)
+
         '''Compute path button'''
         self.compute_path_button = Button(self,text="Compute Path",height = 2, width = 10, command = self.compute_path)
         self.compute_path_button.place(x=780,y=800)
@@ -83,14 +97,17 @@ class GUI(Tk):
         '''Export path'''
         self.export_path_button = Button(self,text="Export Path",height = 2, width = 10, command = self.export_path)
         self.export_path_button.place(x=880,y=800)
-        self.tools.get_tile([43,3], self.map_plot)
+        #self.tools.get_tile([43,3], self.map_plot)
 
         self.mainloop()
+    def clear_waypoints(self):
+        self.waypoint_array = []
     def add_waypoint(self):
-        pass
-    def compute_path(self):
-        pass
+        self.waypoint_array.append([self.Longditude_input.get(), self.Latitude_input.get(), self.Altitude_input.get()])
+        print(self.waypoint_array)
+
     def export_path(self):
+        for mission_index in range(0,len())
         pass
 
 
