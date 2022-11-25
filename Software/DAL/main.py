@@ -133,12 +133,6 @@ class main():
         print("Mission Loaded Successfully.")
         self.mainloop_process = Process(target = self.mainloop) #Define the
         self.mainloop_process.start()
-
-    def Get_Home(self):
-
-    def Do_Waypoints(self, path):
-
-
     def Heuristic_Automatic_Landing_Operation(self):# HALO
         '''A fully autinimious heuristic algorithum that optimised the landing heading and flight path angle'''
         pass
@@ -185,10 +179,10 @@ class main():
         for self.mission_section in self.mission_sections:
             self.section_type = self.mission_data[self.mission_section]["Type"]
             if self.section_type = "TKOF":
-                self.Minimum_Pitch = self.mission_data[self.mission_section]["TKOF_Options"]["Minimum_Pitch"]
-                self.Latitude = self.mission_data[self.mission_section]["TKOF_Options"]["Latitude"]
-                self.Longditude = self.mission_data[self.mission_section]["TKOF_Options"]["Longditude"]
-                self.Altitude = self.mission_data[self.mission_section]["TKOF_Options"]["Altitude"]
+                self.Minimum_Pitch = [self.mission_data[self.mission_section]["TKOF_Options"]["Minimum_Pitch"]]
+                self.Latitude = [self.mission_data[self.mission_section]["TKOF_Options"]["Latitude"]]
+                self.Longditude = [self.mission_data[self.mission_section]["TKOF_Options"]["Longditude"]]
+                self.Altitude = [self.mission_data[self.mission_section]["TKOF_Options"]["Altitude"]]
                 self.Mission_objects.append(Takeoff(0,self.Latitude, self.Longditude, self.Altitude, self.Minimum_Pitch))
             elif self.section_type = "WP":
                 self.Latitude = []
@@ -205,13 +199,13 @@ class main():
                     self.Pass_Distance.append(self.mission_data[self.mission_section]["Waypoints"][self.Mission_item]["Pass_Distance"])
                 self.Mission_objects.append(Path(self.Latitude, self.Longditude, self.Acceptance_Radius, self.Pass_Distance, self.Altitude))
             elif self.section_type = "PCR":
-                self.Latitude = self.mission_data[self.mission_section]["PCR_Data"]["Latitude"]
-                self.Longditude = self.mission_data[self.mission_section]["PCR_Data"]["Longditude"]
+                self.Latitude = [self.mission_data[self.mission_section]["PCR_Data"]["Latitude"]]
+                self.Longditude = [self.mission_data[self.mission_section]["PCR_Data"]["Longditude"]]
                 self.Mission_objects.append(PCR(self.Latitude, self.Latitude))
             elif self.section_type = "HALO":
-                self.Latitude = self.mission_data[self.mission_section]["HALO_Data"]["Latitude"]
-                self.Longditude = self.mission_data[self.mission_section]["HALO_Data"]["Longditude"]
-                self.Altitude = self.mission_data[self.mission_section]["HALO_Data"]["Altitude_Abort"]
+                self.Latitude = [self.mission_data[self.mission_section]["HALO_Data"]["Latitude"]]
+                self.Longditude = [self.mission_data[self.mission_section]["HALO_Data"]["Longditude"]]
+                self.Altitude = [self.mission_data[self.mission_section]["HALO_Data"]["Altitude_Abort"]]
                 self.Mission_objects.append(HALO(self.Latitude, self.Latitude, self.Altitude))
             else:
                 print("Mission item unknown")
@@ -278,11 +272,12 @@ class main():
             sleep(1)
             print(FailSafe_Ready)
             pass
+        '''Upload Mission'''
+        self.Load_mission()
+        '''Wait for arming'''
         print(self.link.connection.motors_armed_wait())
         print("Armed")
-        '''Upload Mission'''
-
-
+        for self.mission_object in self.Mission_objects:
 
         '''Monitor waypoint mission progress.'''
 
