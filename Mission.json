@@ -41,32 +41,9 @@
   },
   "Section_2":{
     "Type":"PCR",
-    "Waypoints":{
-
-      "Mission_Item_0": {
-        "Mission_Item_Index":0,
-        "Latitude":0,
-        "Longditude":0,
-        "Altitude":50,
-        "Acceptance_Radius":10,
-        "Pass_Distance":0
-      },
-      "Mission_Item_1": {
-        "Mission_Item_Index":1,
-        "Latitude":0,
-        "Longditude":0,
-        "Altitude":50,
-        "Acceptance_Radius":10,
-        "Pass_Distance":0
-      },
-      "Mission_Item_1": {
-        "Mission_Item_Index":1,
-        "Latitude":0,
-        "Longditude":0,
-        "Altitude":50,
-        "Acceptance_Radius":10,
-        "Pass_Distance":0
-      }
+    "PCR_Data":{
+      "Latitude":0,
+      "Longditude":0
     }
   },
   "Section_3":{
@@ -100,13 +77,10 @@
   },
   "Section_4":{
     "Type":"HALO",
-    "Waypoints":{
-      "Mission_Item_0": {
-        "Mission_Item_Index":0,
-        "Altitude_Abort":50,
-        "Latitude":0,
-        "Longditude":0
-      }
+    "HALO_Data":{
+      "Altitude_Abort":50,
+      "Latitude":0,
+      "Longditude":0
     }
   }
 }
