@@ -180,6 +180,17 @@ class main():
 
 
         while not self.cargo_relased:
+
+            self.radius = np.sqrt((self.v*np.cos(self.heading))**2+(self.v*np.sin(self.heading))**2)/self.d_heading
+            if self.d_heading>0: # Centre of rotation will be to te right of the aircraft
+                self.rotation_displacment = [self.radius*np.cos(self.heading),-self.radius*np.sin(self.heading)]+self.position# The global position of the centre of rotation
+            elif self.d_heading<0: # Centre of rotation will be to the left of the aircraft
+                self.rotation_displacment = [-self.radius*np.cos(self.heading),self.radius*np.sin(self.heading)]+self.position
+            else: # Centre of rotation  is at infinity
+                pass
+
+            self.Time_To_CA = ((2*np.pi - self.heading) - np.arctan2())
+            self.C_O_R =
             self.link.connection.messages
             self.position = np.array([])
             self.v_x = self.v*np.cos(self.heading+self.d_heading)
