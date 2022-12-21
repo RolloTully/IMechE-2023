@@ -43,7 +43,7 @@ class Link(object):
         self.latitude, self.longditude, self.radius, self.pass_radius, self.altitude = mission_item()
         print(mission_item())
         for self.mission_item_index in range(0,len(self.latitude)):
-            self.point = mavutil.mavlink.MAVLink_mission_item_message(self.connection.target_system, self.connection.target_component, self.mission_item_index, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 1, 0, (float(self.radius[self.mission_item_index])), (float(self.pass_radius[self.mission_item_index])), 0, (float(self.latitude[self.mission_item_index])), (float(self.longditude[self.mission_item_index])), self.altitude)
+            self.point = mavutil.mavlink.MAVLink_mission_item_message(self.connection.target_system, self.connection.target_component, self.mission_item_index, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 1, 0, (float(self.radius[self.mission_item_index])), (float(self.pass_radius[self.mission_item_index])), 0, (float(self.latitude[self.mission_item_index])), (float(self.longditude[self.mission_item_index])), self.altitude[self.mission_item_index])
             #print(self.point)
             self.Waypoint_Loader.add(self.point)
         self.Send_waypoints()
@@ -74,7 +74,7 @@ class Link(object):
         while True:
             self.connection.mav.heartbeat_send(mavutil.mavlink.MAV_TYPE_ONBOARD_CONTROLLER,mavutil.mavlink.MAV_AUTOPILOT_GENERIC, 0, 0, 0)
             self.connection.wait_heartbeat()
-            sleep(0.1)
+            sleep(0.9)
 
     def set_pwm(self, channel, position):
         self.rc_channel_values = [65535 for _ in range(18)]
@@ -127,7 +127,7 @@ class PCR(object):
         self.longditude = longditude #Longditude
         self.altitude = altitude     #Target waypoint altitude
     def __call__(self):
-        return self.latitude, self.longditude, self.radius, self.altitude
+        return self.latitude, self.longditude, self.altitude
 
 class main():
     def __init__(self):
