@@ -30,19 +30,21 @@ class Link(object):
             self.connection.mav.command_long_send(self.connection.target_system,self.connection.target_component, mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,0,cmd,2000,1,0,0,0,0) # Requests the required messages
             self.connection.recv_match(type='COMMAND_ACK', blocking = True) # Waits for confirmation.
 
-    def Do_Takeoff(self, mission_item):
+    def Do_Takeoff(self, mission_item):# Working
         self.latitude, self.longditude, self.altitude, self.minimum_Pitch = mission_item()
-        print("Takeoff", self.latitude, self.longditude, self.altitude, self.minimum_Pitch, mission_item())
-        self.point = mavutil.mavlink.MAVLink_mission_item_message(self.connection.target_system, self.connection.target_component, 0.0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 1.0, self.minimum_Pitch, 0, 0, 0, self.latitude, self.longditude, self.altitude)
+        print("Takeoff", self.latitude, self.longditude, self.altitude, self.minimum_Pitch)
+        self.point = mavutil.mavlink.MAVLink_mission_item_message(self.connection.target_system, self.connection.target_component, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 1, self.minimum_Pitch[0], 0, 0, 0, (float(self.latitude[0])), (float(self.longditude[0])), self.altitude[0])
+
         self.Waypoint_Loader.add(self.point)
         self.Send_waypoints()
 
     def Do_Waypoints(self, mission_item):
         ''' Uploads a sequence of way points'''
         self.latitude, self.longditude, self.radius, self.pass_radius, self.altitude = mission_item()
+        print(mission_item())
         for self.mission_item_index in range(0,len(self.latitude)):
-            print(self.radius[self.mission_item_index], self.pass_radius[self.mission_item_index], self.latitude[self.mission_item_index], self.longditude[self.mission_item_index], self.altitude[self.mission_item_index])
-            self.point = mavutil.mavlink.MAVLink_mission_item_message(self.connection.target_system, self.connection.target_component, self.mission_item_index, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 1, 0, self.radius[self.mission_item_index], self.pass_radius[self.mission_item_index], 0, self.latitude[self.mission_item_index], self.longditude[self.mission_item_index], self.altitude[self.mission_item_index])
+            self.point = mavutil.mavlink.MAVLink_mission_item_message(self.connection.target_system, self.connection.target_component, self.mission_item_index, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 1, 0, (float(self.radius[self.mission_item_index])), (float(self.pass_radius[self.mission_item_index])), 0, (float(self.latitude[self.mission_item_index])), (float(self.longditude[self.mission_item_index])), self.altitude)
+            #print(self.point)
             self.Waypoint_Loader.add(self.point)
         self.Send_waypoints()
     def Do_Landing(self, mission_item):
@@ -53,11 +55,16 @@ class Link(object):
     def Send_waypoints(self):#SOMETHING IS WRONG HERE
         self.connection.waypoint_clear_all_send()
         self.connection.waypoint_count_send(self.Waypoint_Loader.count())
+        print("waypoint count",self.Waypoint_Loader.count())
         for i in range(self.Waypoint_Loader.count()):
+            print("Mission item", i)
             self.msg = self.connection.recv_match(type=['MISSION_REQUEST'],blocking=True)
-            self.connection.mav.send(self.Waypoint_Loader.wp(self.msg.seq))
+            print(self.Waypoint_Loader.wp(self.msg.seq))
+            self.connection.mav.send(self.Waypoint_Loader.wp(self.msg.seq)) #This line is broken
             print('Sending waypoint {0}'.format(self.msg.seq))
+            print("Mission item", i, "uploaded")
         self.msg = self.connection.recv_match(type=['MISSION_ACK'],blocking=True) # OKAY
+        print(self.msg)
 
     def Send_Message_To_GCS(self, message):
         pass
@@ -72,7 +79,7 @@ class Link(object):
     def set_pwm(self, channel, position):
         self.rc_channel_values = [65535 for _ in range(18)]
         self.rc_channel_values[channel- 1] = position
-        self.commection.mav.rc_channels_override_send(self.connection.target_system,self.connection.target_component,*self.rc_channel_values)
+        self.connection.mav.rc_channels_override_send(self.connection.target_system,self.connection.target_component,*self.rc_channel_values)
     def disarm(self):
         '''Force disarms drone'''
         self.connection.mav.command_long_send(self.connection.target_system, self.connection.target_component, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,0,21196,0,0,0,0,0)
@@ -87,7 +94,7 @@ class Link(object):
 
 class Path(object):
     '''Defines a path for the drone to follow'''
-    def __init__(self, index, latitude = None, longditude = None, radius= 30, p_rad = 0, altitude = 60):
+    def __init__(self, latitude = None, longditude = None, radius= 30, p_rad = 0, altitude = 60):
         self.latitude = latitude     #Latitude
         self.longditude = longditude #Longditude
         self.altitude = altitude     #Landing waypoint altitude
@@ -190,8 +197,8 @@ class main():
                 pass
 
             self.Time_To_CA = ((2*np.pi - self.heading) - np.arctan2())
-            self.C_O_R =
-            self.link.connection.messages
+            #self.C_O_R =
+            #self.link.connection.messages
             self.position = np.array([])
             self.v_x = self.v*np.cos(self.heading+self.d_heading)
             self.v_Y = self.v*np.sin(self.heading+self.d_heading)
@@ -265,6 +272,7 @@ class main():
         Full rudder left
         Initiates a death spiral
         '''
+        #MUST CHANGE MODE TO MANUAL
         # If in no failsafe region override.
         self.link.set_pwm(2,1900)# Elevator
         self.link.set_pwm(3,1900)# Aileron
@@ -323,9 +331,10 @@ class main():
         #    pass
 
         '''Monitor waypoint mission progress.'''
+        print("here")
         for self.mission_item in self.mission:
             if isinstance(self.mission_item, Takeoff):
-                print("Takeoff")
+                print("Takeoff", self.mission_item)
                 self.link.Do_Takeoff(self.mission_item) #Uploads mission waypoints
 
             elif isinstance(self.mission_item, Path):

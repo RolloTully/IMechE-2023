@@ -15,24 +15,64 @@
     "Waypoints":{
       "Mission_Item_0": {
         "Mission_Item_Index":0,
-        "Latitude":0,
-        "Longditude":0,
+        "Latitude":51.1998488,
+        "Longditude":-2.5938707,
         "Altitude":50,
         "Acceptance_Radius":10,
         "Pass_Distance":10
       },
       "Mission_Item_1": {
         "Mission_Item_Index":1,
-        "Latitude":0,
-        "Longditude":0,
+        "Latitude":51.20072757,
+        "Longditude":-2.58759459,
         "Altitude":50,
         "Acceptance_Radius":10,
         "Pass_Distance":10
       },
       "Mission_Item_2": {
         "Mission_Item_Index":2,
-        "Latitude":0,
-        "Longditude":0,
+        "Latitude":51.19967376,
+        "Longditude":-2.58814081,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10
+      },
+      "Mission_Item_3": {
+        "Mission_Item_Index":3,
+        "Latitude":51.19926844,
+        "Longditude":-2.59054132,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10
+      },
+      "Mission_Item_4": {
+        "Mission_Item_Index":4,
+        "Latitude":51.19997099,
+        "Longditude":-2.59220874,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10
+      },
+      "Mission_Item_5": {
+        "Mission_Item_Index":5,
+        "Latitude":51.20092572,
+        "Longditude":-2.5925681,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10
+      },
+      "Mission_Item_6": {
+        "Mission_Item_Index":6,
+        "Latitude":51.20164626,
+        "Longditude":-2.59124566,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10
+      },
+      "Mission_Item_7": {
+        "Mission_Item_Index":7,
+        "Latitude":51.20161924,
+        "Longditude":-2.58977948,
         "Altitude":50,
         "Acceptance_Radius":10,
         "Pass_Distance":10
@@ -42,8 +82,8 @@
   "Section_2":{
     "Type":"PCR",
     "PCR_Data":{
-      "Latitude":0,
-      "Longditude":0
+      "Latitude":51.19967376,
+      "Longditude":-2.59054132
     }
   },
   "Section_3":{
@@ -51,29 +91,70 @@
     "Waypoints":{
       "Mission_Item_0": {
         "Mission_Item_Index":0,
-        "Latitude":0,
-        "Longditude":0,
+        "Latitude":51.1998488,
+        "Longditude":-2.5938707,
         "Altitude":50,
         "Acceptance_Radius":10,
         "Pass_Distance":10
       },
       "Mission_Item_1": {
         "Mission_Item_Index":1,
-        "Latitude":0,
-        "Longditude":0,
+        "Latitude":51.20072757,
+        "Longditude":-2.58759459,
         "Altitude":50,
         "Acceptance_Radius":10,
         "Pass_Distance":10
       },
       "Mission_Item_2": {
         "Mission_Item_Index":2,
-        "Latitude":0,
-        "Longditude":0,
+        "Latitude":51.19967376,
+        "Longditude":-2.58814081,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10
+      },
+      "Mission_Item_3": {
+        "Mission_Item_Index":3,
+        "Latitude":51.19926844,
+        "Longditude":-2.59054132,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10
+      },
+      "Mission_Item_4": {
+        "Mission_Item_Index":4,
+        "Latitude":51.19997099,
+        "Longditude":-2.59220874,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10
+      },
+      "Mission_Item_5": {
+        "Mission_Item_Index":5,
+        "Latitude":51.20092572,
+        "Longditude":-2.5925681,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10
+      },
+      "Mission_Item_6": {
+        "Mission_Item_Index":6,
+        "Latitude":51.20164626,
+        "Longditude":-2.59124566,
+        "Altitude":50,
+        "Acceptance_Radius":10,
+        "Pass_Distance":10
+      },
+      "Mission_Item_7": {
+        "Mission_Item_Index":7,
+        "Latitude":51.20161924,
+        "Longditude":-2.58977948,
         "Altitude":50,
         "Acceptance_Radius":10,
         "Pass_Distance":10
       }
     }
+
   },
   "Section_4":{
     "Type":"HALO",
