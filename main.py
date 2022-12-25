@@ -17,7 +17,15 @@ __/\\\________/\\\___________________/\\\\\\____________________________________
       _\/\\\_______\/\\\___/\\\/////\\\______\/\\\_____\//\\\__________/\\_/\\\______\//\\\__/\\\___\/\\\___\/\\\_
        _\/\\\_______\/\\\__\//\\\\\\\\/\\___/\\\\\\\\\___\///\\\\\\\\__\//\\\\/________\///\\\\\/____\/\\\___\/\\\_
         _\///________\///____\////////\//___\/////////______\////////____\////____________\/////______\///____\///__
-
+__/\\\________/\\\_________________/\\\\\\\\\_________________/\\\\\\\\\\\\____________________/\\\\\\\\\\\___
+ _\/\\\_______\/\\\_______________/\\\\\\\\\\\\\______________\/\\\////////\\\________________/\\\/////////\\\_
+  _\/\\\_______\/\\\______________/\\\/////////\\\_____________\/\\\______\//\\\______________\//\\\______\///__
+   _\/\\\\\\\\\\\\\\\_____________\/\\\_______\/\\\_____________\/\\\_______\/\\\_______________\////\\\_________
+    _\/\\\/////////\\\_____________\/\\\\\\\\\\\\\\\_____________\/\\\_______\/\\\__________________\////\\\______
+     _\/\\\_______\/\\\_____________\/\\\/////////\\\_____________\/\\\_______\/\\\_____________________\////\\\___
+      _\/\\\_______\/\\\_____________\/\\\_______\/\\\_____________\/\\\_______/\\\_______________/\\\______\//\\\__
+       _\/\\\_______\/\\\_____________\/\\\_______\/\\\_____________\/\\\\\\\\\\\\/_______________\///\\\\\\\\\\\/___
+        _\///________\///______________\///________\///______________\////////////___________________\///////////_____
 
 This is a pre-alpha, it contains all the usual bug of pre-alpha code, its buggy, its unstable and, it is entirly untested with no redundent saftey.
 
@@ -45,30 +53,25 @@ class Link(object):
         print("Connection Established.")
         self.connection.wait_heartbeat()
         print("Heartbeat recived.")
-        #self.connection.mav.ping_send(int(time.time() * 1e6),0,0,0)
-        #self.heart_task = Process(target = self.send_heartbeat)
-        #self.heart_task.start()
+
         print("Link Ready.")
 
-
+        #Remove later
         self.connection.set_mode_manual()
 
-    def Set_Messages(self):
-        ''' Sets up the nessecary message intervals'''
-        self.message_list = [33, 83]# Filtered predicted positon, Commanded Attitude
-        for cmd in self.message_list:
-            self.connection.mav.command_long_send(self.connection.target_system,self.connection.target_component, mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,0,cmd,2000,1,0,0,0,0) # Requests the required messages
-            self.connection.recv_match(type='COMMAND_ACK', blocking = True) # Waits for confirmation.
-
     def Do_Takeoff(self, mission_item):# Working
+        '''Uploads the waypoints needed to execute the takeoff run'''
+        #Extract variables
         self.latitude, self.longditude, self.altitude, self.minimum_Pitch = mission_item()
         print("Takeoff", self.latitude, self.longditude, self.altitude, self.minimum_Pitch)
+        #Generate waypoint
         self.point = mavutil.mavlink.MAVLink_mission_item_message(self.connection.target_system, self.connection.target_component, 0, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_TAKEOFF, 0, 1, self.minimum_Pitch[0], 0, 0, 0, (float(self.latitude[0])), (float(self.longditude[0])), self.altitude[0])
-
+        #Add to planner
         self.Waypoint_Loader.add(self.point)
+        #Upload
         self.Send_waypoints()
 
-    def Do_Waypoints(self, mission_item):
+    def Do_Waypoints(self, mission_item):#Working
         ''' Uploads a sequence of way points'''
         self.latitude, self.longditude, self.radius, self.pass_radius, self.altitude = mission_item()
         print(mission_item())
@@ -81,31 +84,25 @@ class Link(object):
         self.latitude, self.longditude, self.altitude = mission_item()
 
 
-    def Send_waypoints(self):#SOMETHING IS WRONG HERE
+    def Send_waypoints(self): #Working
+        '''Uploads a sequence of waypoints, this is normal flight'''
+        #Clears the current sequence present on the flight controller
         self.connection.waypoint_clear_all_send()
+        #Informs the FC how many waypoints are to be uploaded
         self.connection.waypoint_count_send(self.Waypoint_Loader.count())
         print("waypoint count",self.Waypoint_Loader.count())
         for i in range(self.Waypoint_Loader.count()):
-            print("Mission item", i)
+            #Waits for FC to request next mission item
             self.msg = self.connection.recv_match(type=['MISSION_REQUEST'],blocking=True)
-            print(self.Waypoint_Loader.wp(self.msg.seq))
-            self.connection.mav.send(self.Waypoint_Loader.wp(self.msg.seq)) #This line is broken
-            print('Sending waypoint {0}'.format(self.msg.seq))
-            print("Mission item", i, "uploaded")
-        self.msg = self.connection.recv_match(type=['MISSION_ACK'],blocking=True) # OKAY
-        print(self.msg)
+            #Send next item in sequence
+            self.connection.mav.send(self.Waypoint_Loader.wp(self.msg.seq))
+        #Waits for mission to be accepted
+        self.msg = self.connection.recv_match(type=['MISSION_ACK'],blocking=True)
 
-    def Send_Message_To_GCS(self, message):
+    def Send_Message_To_GCS(self, message): #Not implemented
         pass
-
-    def send_heartbeat(self):
-        '''Runs async'''
-        while True:
-            self.connection.mav.heartbeat_send(mavutil.mavlink.MAV_TYPE_ONBOARD_CONTROLLER,mavutil.mavlink.MAV_AUTOPILOT_GENERIC, 0, 0, 0)
-            self.connection.wait_heartbeat()
-            sleep(0.9)
-
     def set_pwm(self, channel, position):
+        '''Sets a specific rc channel to specific position'''
         self.rc_channel_values = [65535 for _ in range(18)]
         self.rc_channel_values[channel- 1] = position
         self.connection.mav.rc_channels_override_send(self.connection.target_system,self.connection.target_component,*self.rc_channel_values)
