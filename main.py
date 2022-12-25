@@ -1,3 +1,30 @@
+'''
+__/\\\\\\\\\\\\\\\___/\\\\\\\\\\\\\\\______/\\\\\\\\\______/\\\\____________/\\\\_
+ _\///////\\\/////___\/\\\///////////_____/\\\\\\\\\\\\\___\/\\\\\\________/\\\\\\_
+  _______\/\\\________\/\\\_______________/\\\/////////\\\__\/\\\//\\\____/\\\//\\\_
+   _______\/\\\________\/\\\\\\\\\\\______\/\\\_______\/\\\__\/\\\\///\\\/\\\/_\/\\\_
+    _______\/\\\________\/\\\///////_______\/\\\\\\\\\\\\\\\__\/\\\__\///\\\/___\/\\\_
+     _______\/\\\________\/\\\______________\/\\\/////////\\\__\/\\\____\///_____\/\\\_
+      _______\/\\\________\/\\\______________\/\\\_______\/\\\__\/\\\_____________\/\\\_
+       _______\/\\\________\/\\\\\\\\\\\\\\\__\/\\\_______\/\\\__\/\\\_____________\/\\\_
+        _______\///_________\///////////////___\///________\///___\///______________\///__
+__/\\\________/\\\___________________/\\\\\\________________________________________________________________
+ _\/\\\_______\/\\\__________________\////\\\________________________________________________________________
+  _\/\\\_______\/\\\_____________________\/\\\_______________________/\\\__/\\\_______________________________
+   _\/\\\\\\\\\\\\\\\___/\\\\\\\\\________\/\\\_________/\\\\\\\\____\//\\\/\\\_______/\\\\\______/\\/\\\\\\___
+    _\/\\\/////////\\\__\////////\\\_______\/\\\_______/\\\//////______\//\\\\\______/\\\///\\\___\/\\\////\\\__
+     _\/\\\_______\/\\\____/\\\\\\\\\\______\/\\\______/\\\______________\//\\\______/\\\__\//\\\__\/\\\__\//\\\_
+      _\/\\\_______\/\\\___/\\\/////\\\______\/\\\_____\//\\\__________/\\_/\\\______\//\\\__/\\\___\/\\\___\/\\\_
+       _\/\\\_______\/\\\__\//\\\\\\\\/\\___/\\\\\\\\\___\///\\\\\\\\__\//\\\\/________\///\\\\\/____\/\\\___\/\\\_
+        _\///________\///____\////////\//___\/////////______\////////____\////____________\/////______\///____\///__
+
+
+This is a pre-alpha, it contains all the usual bug of pre-alpha code, its buggy, its unstable and, it is entirly untested with no redundent saftey.
+
+DO NOT FLY THIS CODE
+
+'''
+
 import pymavlink
 from pymavlink import mavutil, mavwp
 import time
@@ -18,10 +45,13 @@ class Link(object):
         print("Connection Established.")
         self.connection.wait_heartbeat()
         print("Heartbeat recived.")
-        self.connection.mav.ping_send(int(time.time() * 1e6),0,0,0)
-        self.heart_task = Process(target = self.send_heartbeat)
-        self.heart_task.start()
+        #self.connection.mav.ping_send(int(time.time() * 1e6),0,0,0)
+        #self.heart_task = Process(target = self.send_heartbeat)
+        #self.heart_task.start()
         print("Link Ready.")
+
+
+        self.connection.set_mode_manual()
 
     def Set_Messages(self):
         ''' Sets up the nessecary message intervals'''
@@ -44,7 +74,6 @@ class Link(object):
         print(mission_item())
         for self.mission_item_index in range(0,len(self.latitude)):
             self.point = mavutil.mavlink.MAVLink_mission_item_message(self.connection.target_system, self.connection.target_component, self.mission_item_index, mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, mavutil.mavlink.MAV_CMD_NAV_WAYPOINT, 0, 1, 0, (float(self.radius[self.mission_item_index])), (float(self.pass_radius[self.mission_item_index])), 0, (float(self.latitude[self.mission_item_index])), (float(self.longditude[self.mission_item_index])), self.altitude[self.mission_item_index])
-            #print(self.point)
             self.Waypoint_Loader.add(self.point)
         self.Send_waypoints()
     def Do_Landing(self, mission_item):
@@ -94,7 +123,7 @@ class Link(object):
 
 class Path(object):
     '''Defines a path for the drone to follow'''
-    def __init__(self, latitude = None, longditude = None, radius= 30, p_rad = 0, altitude = 60):
+    def __init__(self, latitude = None, longditude = None, radius = 5, p_rad = 0, altitude = 60):
         self.latitude = latitude     #Latitude
         self.longditude = longditude #Longditude
         self.altitude = altitude     #Landing waypoint altitude
@@ -131,7 +160,11 @@ class PCR(object):
 
 class main():
     def __init__(self):
+        print("PRE RELEASE - DO NOT FLY")
+        '''WGS84 is used with the meridian at greenwich so no angular offset is needed'''
+
         '''Parameter List'''
+        self.earth_geoid_radius = 6378137.0 #Meters
         self.cargo_release_time = 0.25 #Time taken for the cargo to exit the aircraft
         self.cargo_relased = False
         self.FS_Maximum_Period = 1 #second
@@ -171,42 +204,76 @@ class main():
         '''A fully autinimious heuristic algorithum that optimised the landing heading and flight path angle'''
         pass
 
-    def Precision_Cargo_Release(self):# PCR
+    def Precision_Cargo_Release(self, item):# PCR
         '''Uses onboard velocity time and position estimations to accuratly release the cargo'''
         self.cargo_relased = False
+        self.lead_lag_distance = 10 #Meters
+        self.angular_leag_lag_distance = 10/self.earth_geoid_radius #Radians
         self.cargo_release_time_threshold = 0.1 #seconds
-        '''Upload Path'''
-        '''Uploads 2 waypoints'''
+        self.wp_latitude, self.wp_longditude, self.wp_alt = item()
+        #Requests wind vectors data stream
+        self.msg = pymavlink.mavutil.mavlink.MAVLink_request_data_stream_message(self.link.connection.target_system,self.link.connection.target_component,pymavlink.mavutil.mavlink.MAV_DATA_STREAM_ALL,1,1)
+        #Sends message
+        self.link.connection.mav.send(self.msg)
+        print("Message sent")
+        #Wait for message to be recived
+        self.msg = self.link.connection.recv_match(type='WIND_CONV', blocking=True, timeout = 2)
+        print(self.msg)
+        if self.msg == None:
+            print("No wind convention available.")
+        else:
+            print("Wind convention found.")
+        '''Extract wind vector data'''
 
-        '''Monitor progress'''
-        '''Checks to see when way point 1 has been passed'''
+        '''Computes wind heading'''
+        self.wind_heading = np.atan2([self.E_wind],[self.N_wind]) #Radians
+        '''Compute leading and lagging points'''
+        self.lagging_point = [self.wp_latitude, self.wp_longditude] + [self.angular_leag_lag_distance*np.cos(self.wind_heading),self.angular_leag_lag_distance*np.sin(self.wind_heading)] #Its not unresonable to approximate the sphere to a flat plain at this scale and location
+        self.leading_point = [self.wp_latitude, self.wp_longditude] - [self.angular_leag_lag_distance*np.cos(self.wind_heading),self.angular_leag_lag_distance*np.sin(self.wind_heading)]
+        '''Generate the path'''
+        self.Latitudes = [self.leading_point[0], self.wp_latitude, self.lagging_point[0]]
+        self.Longditudes = [self.leading_point[1], self.wp_longditude, self.lagging_point[1]]
+        self.PCR_path = Path(self.Latitudes, self.Longditudes,[5,5,5], [0,0,0], [self.wp_alt,self.wp_alt,self.wp_alt])
+        '''Upload Path'''
+        self.link.Do_Waypoints(self.PCR_path)
+
+        '''
+        At this point the aircraft should be heading toward the start of the drop run, we should wait for the first waypoint to be passed
+        once its passed we can move to active monitoring and wait for the drop time to be zero
+        '''
+        self.passed = False
+        while self.passed == False:
+            #Collect current mission message
+            self.msg = self.link.connection.recv_match(type='MISSION_CURRENT', blocking=True, timeout = 2)
+            #Extract the current mission sequence index
+            if :
+                self.passed = True
+            else:
+                pass
         '''Starts monitoring position and release time'''
 
         '''Release cargo, does t<=0'''
-        self.link.set_pwm()#actuated the release servo
-
-
         while not self.cargo_relased:
-
-            self.radius = np.sqrt((self.v*np.cos(self.heading))**2+(self.v*np.sin(self.heading))**2)/self.d_heading
+            #Radius of instantanious path
+            self.radius = self.v/self.d_heading
+            #Compute the location of the centre of rotation
             if self.d_heading>0: # Centre of rotation will be to te right of the aircraft
-                self.rotation_displacment = [self.radius*np.cos(self.heading),-self.radius*np.sin(self.heading)]+self.position# The global position of the centre of rotation
+                self.COR = [self.radius*np.cos(self.heading),-self.radius*np.sin(self.heading)]+self.position# The global position of the centre of rotation
             elif self.d_heading<0: # Centre of rotation will be to the left of the aircraft
-                self.rotation_displacment = [-self.radius*np.cos(self.heading),self.radius*np.sin(self.heading)]+self.position
+                self.COR = [-self.radius*np.cos(self.heading),self.radius*np.sin(self.heading)]+self.position
             else: # Centre of rotation  is at infinity
                 pass
+            #Angle from North to plane WRT centre of rotation
+            self.plane_angle_from_cor =  np.atan2()
+            #Angle from North to target WRT centre of rotation
+            self.target_angle_from_cor = np.atan2()
+            #Time to closest approach
+            self.time_to_CA = (self.target_angle_from_cor-self.plane_angle_from_cor)/self.d_heading
+            if self.time_to_CA<=self.cargo_release_time_threshold:
+                self.link.set_pwm(7,2200)# Moves release servo to open position
+                self.cargo_relased = True
 
-            self.Time_To_CA = ((2*np.pi - self.heading) - np.arctan2())
-            #self.C_O_R =
-            #self.link.connection.messages
-            self.position = np.array([])
-            self.v_x = self.v*np.cos(self.heading+self.d_heading)
-            self.v_Y = self.v*np.sin(self.heading+self.d_heading)
-            self.rho = self.d_heading*self.v
-            self.centre_or_rot = self.position + np.array([self.rho*np.cos(self.heading),self.rho*np.sin(self.heading)])
-            self.prop_forward = []
-            #Extrapolate the planes current flight path to predict the time at which the cargo should be released
-            pass
+
     def Load_Parameters(self):
         '''Loads Program Parameters'''
         self.failure = False
@@ -237,7 +304,6 @@ class main():
                     self.Acceptance_Radius = []
                     self.Pass_Distance = []
                     for self.Mission_item in self.mission_data[self.mission_section]["Waypoints"].keys():
-                        print(self.Mission_item)
                         self.Latitude.append(self.mission_data[self.mission_section]["Waypoints"][self.Mission_item]["Latitude"])
                         self.Longditude.append(self.mission_data[self.mission_section]["Waypoints"][self.Mission_item]["Longditude"])
                         self.Altitude.append(self.mission_data[self.mission_section]["Waypoints"][self.Mission_item]["Altitude"])
@@ -325,10 +391,14 @@ class main():
 
 
         '''Wait for arming'''
-        #print(self.link.connection.motors_armed_wait())
-        #print("Armed")
-        #for self.mission_object in self.mission:
-        #    pass
+        '''checks once a second if the drone is armed'''
+        print("Waiting for arming!")
+        self.link.connection.motors_armed_wait()
+        print("Motors armed")
+        while not self.link.connection.motors_armed():
+            sleep(2)
+            print(self.link.connection.motors_armed())
+        print("Motor arm confirmed")
 
         '''Monitor waypoint mission progress.'''
         print("here")
@@ -343,8 +413,7 @@ class main():
 
             elif isinstance(self.mission_item, PCR):
                 print("PCR")
-                self.link.Do_Waypoints(self.mission_item) #Uploads mission waypoints
-                self.PCR() #Monitors and releases cargo
+                self.Precision_Cargo_Release(self.mission_item) #Monitors and releases cargo
 
             elif isinstance(self.mission_item, HALO):
                 print("Landing")
