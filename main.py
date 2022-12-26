@@ -27,6 +27,8 @@ __/\\\________/\\\_________________/\\\\\\\\\_________________/\\\\\\\\\\\\_____
        _\/\\\_______\/\\\_____________\/\\\_______\/\\\_____________\/\\\\\\\\\\\\/_______________\///\\\\\\\\\\\/___
         _\///________\///______________\///________\///______________\////////////___________________\///////////_____
 
+THIS IS THE HALCYON ADAPTIVE DIRECTOR SYSTEM
+
 This is a pre-alpha, it contains all the usual bug of pre-alpha code, its buggy, its unstable and, it is entirly untested with no redundent saftey.
 
 DO NOT FLY THIS CODE
@@ -35,6 +37,7 @@ DO NOT FLY THIS CODE
 
 import pymavlink
 from pymavlink import mavutil, mavwp
+import pymavlink
 import time
 from multiprocessing import Process, active_children
 import numpy as np
@@ -53,11 +56,10 @@ class Link(object):
         print("Connection Established.")
         self.connection.wait_heartbeat()
         print("Heartbeat recived.")
-
         print("Link Ready.")
 
         #Remove later
-        self.connection.set_mode_manual()
+        #self.connection.set_mode_manual()  Does not work, makes sense why
 
     def Do_Takeoff(self, mission_item):# Working
         '''Uploads the waypoints needed to execute the takeoff run'''
@@ -110,10 +112,29 @@ class Link(object):
         '''Force disarms drone'''
         self.connection.mav.command_long_send(self.connection.target_system, self.connection.target_component, mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0,0,21196,0,0,0,0,0)
         return self.connection.recv.match(type='COMMAND_ACK', blocking = True)
-    def is_landed(self):
-        return self.connection.messages['MAV_LANDED_STATE']
+    def set_geofence(self, fence):
+        self.latitude, self.longditude = fence()
+        self.link.mav.command_long_send(self.connection.target_system, self.connection.target_component,mavutil.mavlink.MAV_CMD_DO_FENCE_ENABLE, 0, 1, 0, 0, 0, 0, 0, 0)
+        self.fence_vertex = [self.connection.mav.mission_item_encode(self.connection.target_system,
+                                                                     self.connection.target_component,
+                                                                     i,
+                                                                     mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
+                                                                     mavutil.mavlink.MAV_CMD_NAV_FENCE_POLYGON_VERTEX_INCLUSION,
+                                                                     0,
+                                                                     0,
+                                                                     i,
+                                                                     1,
+                                                                     0,
+                                                                     0,
+                                                                     tuple(self.latitude[i]),
+                                                                     tuple(self.longditude[i]),
+                                                                     0) for i in range(0,len(self.latitude)) ]
+        self.connection.mav.mission_count_send(self.connection.target_system, self.connection.target_component,len(self.fence_vertex))
+        self.msg = self.connection.recv_match(type='MISSION_ACK', blocking=True)
+        for i, vertex in enumerate(self.fence_vertex):
+            self.connection.mav.mission_item_send
 
-    def set_geofence(self):
+            self.msg = self.connection.recv_match(type='MISSION_ACK', blocking=True)
         pass
 
 
@@ -154,10 +175,18 @@ class PCR(object):
         self.altitude = altitude     #Target waypoint altitude
     def __call__(self):
         return self.latitude, self.longditude, self.altitude
+class Fence(object):
+    '''Contains the coordinates of vertexes of the geofence'''
+    def __init__(self, latitude, longditude):
+        self.latitude = latitude     #Latitude
+        self.longditude = longditude #Longditude
+    def __call__(self):
+        return self.latitude, self.longditude
+
 
 class main():
     def __init__(self):
-        print("PRE RELEASE - DO NOT FLY")
+        print("PRERELEASE - DO NOT FLY")
         '''WGS84 is used with the meridian at greenwich so no angular offset is needed'''
 
         '''Parameter List'''
@@ -183,22 +212,22 @@ class main():
         self.ret = self.Load_Parameters()
         if not self.ret:
             print("Params Loaded.")
-            pass
         else: # PARAM LOADING FAILED
-            pass
+            print("Failed to Load parameters")
+            sys.exit()
 
         '''Loads mission from json'''
         self.ret, self.mission = self.Load_mission()
         if not self.ret:
             print("Mission Loaded Successfully.")
-            pass
         else: # MISSION LOADING FAILED
-            pass # ADD FAILURE PROTOCOL
+            print("Failed to Load Mission")
+            sys.exit()
 
         self.mainloop_process = Process(target = self.mainloop) #Define the
         self.mainloop_process.start()
-    def Heuristic_Automatic_Landing_Operation(self):# HALO
-        '''A fully autinimious heuristic algorithum that optimised the landing heading and flight path angle'''
+    def Heuristic_Automatic_Landing_Operation(self, item):# HALO
+        '''A fully automatic heuristic algorithum that optimises the landing heading and flight path angle'''
         pass
 
     def Precision_Cargo_Release(self, item):# PCR
@@ -215,15 +244,19 @@ class main():
         print("Message sent")
         #Wait for message to be recived
         self.msg = self.link.connection.recv_match(type='WIND_CONV', blocking=True, timeout = 2)
-        print(self.msg)
+
         if self.msg == None:
+            self.err = True
             print("No wind convention available.")
         else:
             print("Wind convention found.")
+            self.err = False
         '''Extract wind vector data'''
-
-        '''Computes wind heading'''
-        self.wind_heading = np.atan2([self.E_wind],[self.N_wind]) #Radians
+        if self.err:
+            self.wind_heading = 2*np.pi*(45/360)
+        else:
+            #Computes wind heading
+            self.wind_heading = np.atan2([self.E_wind],[self.N_wind]) #Radians
         '''Compute leading and lagging points'''
         self.lagging_point = [self.wp_latitude, self.wp_longditude] + [self.angular_leag_lag_distance*np.cos(self.wind_heading),self.angular_leag_lag_distance*np.sin(self.wind_heading)] #Its not unresonable to approximate the sphere to a flat plain at this scale and location
         self.leading_point = [self.wp_latitude, self.wp_longditude] - [self.angular_leag_lag_distance*np.cos(self.wind_heading),self.angular_leag_lag_distance*np.sin(self.wind_heading)]
@@ -243,10 +276,10 @@ class main():
             #Collect current mission message
             self.msg = self.link.connection.recv_match(type='MISSION_CURRENT', blocking=True, timeout = 2)
             #Extract the current mission sequence index
-            if :
-                self.passed = True
-            else:
-                pass
+            #if :
+            #    self.passed = True
+            #else:
+            #    pass
         '''Starts monitoring position and release time'''
 
         '''Release cargo, does t<=0'''
@@ -277,10 +310,19 @@ class main():
         self.param_data = json.load(open("param.json","r"))
         self.param_items = self.param_data.keys()
         return self.failure
-
+    def Load_geofence(self):
+        '''Loads the geofence verticies from a JSON file on the SD card'''
+        self.Geofence_verticies = []
+        self.ret = False
+        try:
+            self.geofence_data = json.load(open("GeoFence.json","r" ))
+            self.vertices = self.geofence_data.keys()
+            for self.vertex in self.vertices:
+                self.Geofence_verticies.append([float(self.geofence_data[self.vertex]["Latitude"]),
+                                                float(self.geofence_data[self.vertex]["Longditude"])])
 
     def Load_mission(self):
-        '''Loads in mission waypoints from a JSON file on an sd card'''
+        '''Loads in mission waypoints from a JSON file on an SD card'''
         self.Mission_objects = []
         self.ret = False
         try:
@@ -335,7 +377,7 @@ class main():
         Full rudder left
         Initiates a death spiral
         '''
-        #MUST CHANGE MODE TO MANUAL
+        #MUST CHANGE MODE TO Stabalized
         # If in no failsafe region override.
         self.link.set_pwm(2,1900)# Elevator
         self.link.set_pwm(3,1900)# Aileron
@@ -379,34 +421,41 @@ class main():
             print("All child processes terminated.")
             print("Terminating flight director.")
             sys.exit()
+    def wait_for_mission_end(self):
+        #self.link.connection.mav.send(pymavlink.MAVLink_mission_request_list_message(target_system=1,target_component=1))
+        self.link.connection.waypoint_request_list_send()
+        self.msg = self.link.connection.recv_match(type='MISSION_COUNT', blocking=True)
+        self.n = self.msg.count
+        print("es=", self.n)
+        while True:
+            sleep(0.2) #Slows it down a bit just to save on
+            self.msg = self.link.connection.recv_match(type='WAYPOINT_CURRENT', blocking=True)
+            print(self.msg)
+            if self.msg is None:
+                print("None encountered while monitoring")
+            if self.msg.seq == self.n:
+                print("Mission segment completed")
+                break
+
     def mainloop(self):
-        '''hold while plane is not armed'''
-        #while not FailSafe_Ready:
-        #    sleep(1)
-        #    print(FailSafe_Ready)
-        #    pass
-
-
-        '''Wait for arming'''
-        '''checks once a second if the drone is armed'''
         print("Waiting for arming!")
-        self.link.connection.motors_armed_wait()
+        self.link.connection.motors_armed_wait() #Waits for FC to be armed
         print("Motors armed")
-        while not self.link.connection.motors_armed():
+        while not self.link.connection.motors_armed(): # Double chekcs
             sleep(2)
             print(self.link.connection.motors_armed())
         print("Motor arm confirmed")
 
         '''Monitor waypoint mission progress.'''
-        print("here")
         for self.mission_item in self.mission:
             if isinstance(self.mission_item, Takeoff):
                 print("Takeoff", self.mission_item)
                 self.link.Do_Takeoff(self.mission_item) #Uploads mission waypoints
-
+                self.wait_for_mission_end()
             elif isinstance(self.mission_item, Path):
                 print("Path")
                 self.link.Do_Waypoints(self.mission_item) #Uploads mission waypoints
+                self.wait_for_mission_end()
 
             elif isinstance(self.mission_item, PCR):
                 print("PCR")
@@ -414,7 +463,7 @@ class main():
 
             elif isinstance(self.mission_item, HALO):
                 print("Landing")
-                self.link.Do_Landing(self.mission_item) #Uploads mission waypoints
+                self.Heuristic_Automatic_Landing_Operation(self.mission_item)
             else:
                 pass
         '''Mission Complete'''

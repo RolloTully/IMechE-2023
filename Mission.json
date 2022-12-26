@@ -15,8 +15,8 @@
     "Waypoints":{
       "Mission_Item_0": {
         "Mission_Item_Index":0,
-        "Latitude":51.1998488,
-        "Longditude":-2.5938707,
+        "Latitude":51.1998588,
+        "Longditude":-2.5938807,
         "Altitude":50,
         "Acceptance_Radius":10,
         "Pass_Distance":10
