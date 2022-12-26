@@ -215,6 +215,13 @@ class main():
         else: # PARAM LOADING FAILED
             print("Failed to Load parameters")
             sys.exit()
+        '''Loads geofence from json'''
+        self.ret, self.fence_verticies = self.Load_geofence()
+        if not self.ret:
+            print("Geofence Loaded Successfully.")
+        else: # MISSION LOADING FAILED
+            print("Failed to Load geofence")
+            sys.exit()
 
         '''Loads mission from json'''
         self.ret, self.mission = self.Load_mission()
@@ -313,15 +320,24 @@ class main():
     def Load_geofence(self):
         '''Loads the geofence verticies from a JSON file on the SD card'''
         self.Geofence_verticies = []
-        self.ret = False
+        self.ret = True
+
         try:
             self.geofence_data = json.load(open("GeoFence.json","r" ))
-            self.vertices = self.geofence_data.keys()
-            for self.vertex in self.vertices:
+            self.verticies = self.geofence_data.keys()
+            print(self.verticies)
+            for self.vertex in self.verticies:
+                print(self.geofence_data[self.vertex], self.vertex)
+                print([float(self.geofence_data[self.vertex]["Latitude"]),float(self.geofence_data[self.vertex]["Longditude"])])
                 self.Geofence_verticies.append([float(self.geofence_data[self.vertex]["Latitude"]),
                                                 float(self.geofence_data[self.vertex]["Longditude"])])
+            self.ret = False
+        except:
+            print("Error encountered, unable to load geofence")
+            self.ret = True
+        return self.ret, self.Geofence_verticies
 
-    def Load_mission(self):
+    def Load_mission(self): #Working
         '''Loads in mission waypoints from a JSON file on an SD card'''
         self.Mission_objects = []
         self.ret = False
@@ -364,7 +380,7 @@ class main():
             self.ret = True
         return self.ret, self.Mission_objects
 
-    def Failsafe_Action(self):
+    def Failsafe_Action(self): #Working
         '''
         The actions of the FTS must aim to safely land the UA as soon as possible after initiation.
         For Fixed Wing aircraft, the throttle shall be set to ‘engine off’ and the control surfaces
@@ -380,9 +396,9 @@ class main():
         #MUST CHANGE MODE TO Stabalized
         # If in no failsafe region override.
         self.link.set_pwm(2,1900)# Elevator
-        self.link.set_pwm(3,1900)# Aileron
+        self.link.set_pwm(1,1900)# Aileron
         self.link.set_pwm(4,1900)# Rudder
-        self.link.set_pwm(1,500) #Throttle
+        self.link.set_pwm(3,500) #Throttle
 
     def Failsafe_Watchdog(self):
         '''Monitors system parameters to ensure complicate with all failsafe conditions'''
@@ -407,7 +423,8 @@ class main():
             print("Set state")
             FailSafe_Ready = True
             pass
-    def keyboard_interupt_handler(self,q,p):
+
+    def keyboard_interupt_handler(self,q,p): #Working
         '''Execute order 66, kills all the children'''
         '''Interupts the standard keyboard interupt to ensure all processes are correctly terminated.'''
         if not self.link.is_landed():
@@ -421,6 +438,7 @@ class main():
             print("All child processes terminated.")
             print("Terminating flight director.")
             sys.exit()
+
     def wait_for_mission_end(self):
         #self.link.connection.mav.send(pymavlink.MAVLink_mission_request_list_message(target_system=1,target_component=1))
         self.link.connection.waypoint_request_list_send()
@@ -438,6 +456,9 @@ class main():
                 break
 
     def mainloop(self):
+        print("Waiting for GPS!")
+        print("NOT SAFE TOO FLY")#self.link.connection.wait_gps_fix()
+        #print(str(self.link.connection.location()))
         print("Waiting for arming!")
         self.link.connection.motors_armed_wait() #Waits for FC to be armed
         print("Motors armed")
@@ -467,9 +488,11 @@ class main():
             else:
                 pass
         '''Mission Complete'''
-
-        sleep(5)
-        self.link.disarm()
+        print("Mission Completed!")
+        self.link.disarm()# Force disarms the drone!
+        self.link.connection.motors_disarmed_wait()# Waits for confrimation of disarm
+        print("Motors Disarmed, it is safe to approach the drone")
+        #Try to get it to make some beeps or something
 
 if __name__ == "__main__":
     main()
