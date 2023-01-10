@@ -88,6 +88,7 @@ class Link(object):
 
     def Send_waypoints(self): #Working
         '''Uploads a sequence of waypoints, this is normal flight'''
+        print("Uploading mission")
         #Clears the current sequence present on the flight controller
         self.connection.waypoint_clear_all_send()
         #Informs the FC how many waypoints are to be uploaded
@@ -102,6 +103,7 @@ class Link(object):
         self.msg = self.connection.recv_match(type=['MISSION_ACK'],blocking=True)
 
     def Send_Message_To_GCS(self, message): #Not implemented
+        '''Send a status message to be displayed the Qgroudcontrol'''
         pass
     def set_pwm(self, channel, position):
         '''Sets a specific rc channel to specific position'''
@@ -150,6 +152,7 @@ class Path(object):
         self.altitude = altitude     #Target waypoint altitude
     def __call__(self):
         return self.latitude, self.longditude, self.radius, self.pass_radius, self.altitude
+
 class Takeoff(object):
     "Defines the takeoff"
     def __init__(self, latitude = None, longditude = None, altitude = 50, minimum_pitch = 15):
@@ -159,6 +162,7 @@ class Takeoff(object):
         self.minimum_Pitch = minimum_pitch
     def __call__(self):
         return self.latitude, self.longditude, self.altitude, self.minimum_Pitch
+
 class HALO(object):
     '''The Dynamic Auto Landing mission item instructs the flight director to perform the relevent actions'''
     def __init__(self, index, latitude = None, longditude = None, radius= 30, altitude = 60):
@@ -167,6 +171,7 @@ class HALO(object):
         self.altitude = altitude     #Landing waypoint altitude
     def __call__(self):
         return self.latitude, self.longditude, self.altitude
+
 class PCR(object):
     '''This mission item in formed the flight director to monitor the aircraft position and release the cargo at the optimal moment'''
     def __init__(self, latitude = None, longditude = None, altitude = 30):
@@ -175,6 +180,7 @@ class PCR(object):
         self.altitude = altitude     #Target waypoint altitude
     def __call__(self):
         return self.latitude, self.longditude, self.altitude
+
 class Fence(object):
     '''Contains the coordinates of vertexes of the geofence'''
     def __init__(self, latitude, longditude):
@@ -182,6 +188,8 @@ class Fence(object):
         self.longditude = longditude #Longditude
     def __call__(self):
         return self.latitude, self.longditude
+    def __str__(self):
+        pass
 
 
 class main():
@@ -216,13 +224,15 @@ class main():
             print("Failed to Load parameters")
             sys.exit()
         '''Loads geofence from json'''
-        self.ret, self.fence_verticies = self.Load_geofence()
+        self.ret, self.fence = self.Load_geofence()
         if not self.ret:
             print("Geofence Loaded Successfully.")
-        else: # MISSION LOADING FAILED
+        else:
             print("Failed to Load geofence")
             sys.exit()
 
+        '''Uploads Geofence'''
+        # TODO:
         '''Loads mission from json'''
         self.ret, self.mission = self.Load_mission()
         if not self.ret:
@@ -230,9 +240,9 @@ class main():
         else: # MISSION LOADING FAILED
             print("Failed to Load Mission")
             sys.exit()
-
         self.mainloop_process = Process(target = self.mainloop) #Define the
         self.mainloop_process.start()
+
     def Heuristic_Automatic_Landing_Operation(self, item):# HALO
         '''A fully automatic heuristic algorithum that optimises the landing heading and flight path angle'''
         pass
@@ -250,13 +260,13 @@ class main():
         self.link.connection.mav.send(self.msg)
         print("Message sent")
         #Wait for message to be recived
-        self.msg = self.link.connection.recv_match(type='WIND_CONV', blocking=True, timeout = 2)
-
+        self.msg = self.link.connection.recv_match(type='WIND', blocking=True, timeout = 2)
         if self.msg == None:
             self.err = True
             print("No wind convention available.")
         else:
             print("Wind convention found.")
+            print(self.msg)
             self.err = False
         '''Extract wind vector data'''
         if self.err:
@@ -311,31 +321,29 @@ class main():
                 self.cargo_relased = True
 
 
-    def Load_Parameters(self):
+    def Load_Parameters(self): #Wokring but not realy needed
         '''Loads Program Parameters'''
-        self.failure = False
+        self.ret = False
         self.param_data = json.load(open("param.json","r"))
         self.param_items = self.param_data.keys()
-        return self.failure
-    def Load_geofence(self):
-        '''Loads the geofence verticies from a JSON file on the SD card'''
-        self.Geofence_verticies = []
-        self.ret = True
+        return self.ret
 
+    def Load_geofence(self): #Working
+        '''Loads the geofence verticies from a JSON file on the SD card'''
+        self.Geofence_Latitude = []
+        self.Geofence_Longditude = []
+        self.ret = True
         try:
             self.geofence_data = json.load(open("GeoFence.json","r" ))
             self.verticies = self.geofence_data.keys()
-            print(self.verticies)
             for self.vertex in self.verticies:
-                print(self.geofence_data[self.vertex], self.vertex)
-                print([float(self.geofence_data[self.vertex]["Latitude"]),float(self.geofence_data[self.vertex]["Longditude"])])
-                self.Geofence_verticies.append([float(self.geofence_data[self.vertex]["Latitude"]),
-                                                float(self.geofence_data[self.vertex]["Longditude"])])
+                self.Geofence_Latitude.append(float(self.geofence_data[self.vertex]["Latitude"]))
+                self.Geofence_Longditude.append(float(self.geofence_data[self.vertex]["Longditude"]))
             self.ret = False
         except:
             print("Error encountered, unable to load geofence")
             self.ret = True
-        return self.ret, self.Geofence_verticies
+        return self.ret, Fence(self.Geofence_Latitude, self.Geofence_Longditude)
 
     def Load_mission(self): #Working
         '''Loads in mission waypoints from a JSON file on an SD card'''
@@ -439,21 +447,25 @@ class main():
             print("Terminating flight director.")
             sys.exit()
 
-    def wait_for_mission_end(self):
-        #self.link.connection.mav.send(pymavlink.MAVLink_mission_request_list_message(target_system=1,target_component=1))
+    def wait_for_mission_end(self): #Working
+        '''
         self.link.connection.waypoint_request_list_send()
         self.msg = self.link.connection.recv_match(type='MISSION_COUNT', blocking=True)
         self.n = self.msg.count
-        print("es=", self.n)
+        if self.n == 1:
+            print("1 waypoint to be completed.")
+        else:
+            print(self.n ," waypoints to be completed.")
         while True:
-            sleep(0.2) #Slows it down a bit just to save on
-            self.msg = self.link.connection.recv_match(type='WAYPOINT_CURRENT', blocking=True)
-            print(self.msg)
+            sleep(0.2) #Slows it down a bit just to save on processing
+            self.msg = self.link.connection.waypoint_current()
             if self.msg is None:
                 print("None encountered while monitoring")
-            if self.msg.seq == self.n:
+            if self.msg == self.n:
                 print("Mission segment completed")
                 break
+        '''
+        pass
 
     def mainloop(self):
         print("Waiting for GPS!")
@@ -470,7 +482,6 @@ class main():
         '''Monitor waypoint mission progress.'''
         for self.mission_item in self.mission:
             if isinstance(self.mission_item, Takeoff):
-                print("Takeoff", self.mission_item)
                 self.link.Do_Takeoff(self.mission_item) #Uploads mission waypoints
                 self.wait_for_mission_end()
             elif isinstance(self.mission_item, Path):
