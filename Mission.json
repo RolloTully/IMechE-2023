@@ -161,7 +161,8 @@
     "HALO_Data":{
       "Altitude_Abort":50,
       "Latitude":0,
-      "Longditude":0
+      "Longditude":0,
+      "Heading":0
     }
   }
 }

@@ -165,12 +165,14 @@ class Takeoff(object):
 
 class HALO(object):
     '''The Dynamic Auto Landing mission item instructs the flight director to perform the relevent actions'''
-    def __init__(self, index, latitude = None, longditude = None, radius= 30, altitude = 60):
+    def __init__(self, index, latitude = None, longditude = None, heading = None radius= 30, altitude = 60):
         self.latitude = latitude     #Landing Latitude
         self.longditude = longditude #Landing Longditude
         self.altitude = altitude     #Landing waypoint altitude
+        self.Heading = heading #Angle of the runway
+        self.Landing_Angle = 20 #Decent Angle
     def __call__(self):
-        return self.latitude, self.longditude, self.altitude
+        return self.latitude, self.longditude, self.altitude, self.Heading, self.Landing_Angle
 
 class PCR(object):
     '''This mission item in formed the flight director to monitor the aircraft position and release the cargo at the optimal moment'''
@@ -245,6 +247,19 @@ class main():
 
     def Heuristic_Automatic_Landing_Operation(self, item):# HALO
         '''A fully automatic heuristic algorithum that optimises the landing heading and flight path angle'''
+        '''Extract struct data'''
+        self.latitude, self.longditude, self.altitude, self.Heading, self.Landing_Angle = item()
+        '''Select Landing Direction'''
+        self.Current_Wind_Angle = 0
+        self.Angle_Choices = [self.angle, self.angle-180]
+        self.Angular_Difference = self.Angular_Choices-self.Current_Wind_Angle
+        self.Max_Angle_index = np.argmax(self.Angular_Difference)
+        self.Landing_angle = self.Angle_Choices[self.Max_Angle_index]
+        if self.Landing_angle<0:
+            self.Landing_angle += 360
+        '''We must now generate the landing path waypoints'''
+        '''One point will be at the Final landing Location'''
+        self.Landing_Path_Ground_Track_Length =
         pass
 
     def distance(x,y):
@@ -413,7 +428,8 @@ class main():
                     self.Latitude = [self.mission_data[self.mission_section]["HALO_Data"]["Latitude"]]
                     self.Longditude = [self.mission_data[self.mission_section]["HALO_Data"]["Longditude"]]
                     self.Altitude = [self.mission_data[self.mission_section]["HALO_Data"]["Altitude_Abort"]]
-                    self.Mission_objects.append(HALO(self.Latitude, self.Latitude, self.Altitude))
+                    self.Heading = [self.mission_data[self.mission_section]["HALO_Data"]["Heading"]]
+                    self.Mission_objects.append(HALO(self.Latitude, self.Latitude, self.Altitude, self.Heading))
                 else:
                     print("Mission item unknown")
         except:
